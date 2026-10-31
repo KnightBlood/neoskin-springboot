@@ -1,0 +1,173 @@
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	.well-known/change-password		Illuminate\Routing\RedirectController	web
+GET|HEAD	/	home	App\Http\Controllers\HomeController@index	web
+POST	_ignition/execute-solution	ignition.executeSolution	Spatie\LaravelIgnition\Http\Controllers\ExecuteSolutionController	Spatie\LaravelIgnition\Http\Middleware\RunnableSolutionsEnabled
+GET|HEAD	_ignition/health-check	ignition.healthCheck	Spatie\LaravelIgnition\Http\Controllers\HealthCheckController	Spatie\LaravelIgnition\Http\Middleware\RunnableSolutionsEnabled
+POST	_ignition/update-config	ignition.updateConfig	Spatie\LaravelIgnition\Http\Controllers\UpdateConfigController	Spatie\LaravelIgnition\Http\Middleware\RunnableSolutionsEnabled
+GET|HEAD	admin	admin.view	App\Http\Controllers\AdminController@index	web,authorize,role:admin
+GET|HEAD	admin/chart	admin.chart	App\Http\Controllers\AdminController@chartData	web,authorize,role:admin
+POST	admin/closet/{user}	admin.closet.add	App\Http\Controllers\ClosetManagementController@add	web,authorize,role:admin
+DELETE	admin/closet/{user}	admin.closet.remove	App\Http\Controllers\ClosetManagementController@remove	web,authorize,role:admin
+GET|HEAD	admin/communications	admin.communications.index	App\Http\Controllers\CommunicationsController@index	web,authorize,role:admin
+POST	admin/communications	admin.communications.store	App\Http\Controllers\CommunicationsController@store	web,authorize,role:admin
+POST	admin/communications/import	admin.communications.import	App\Http\Controllers\CommunicationsController@importSource	web,authorize,role:admin,throttle:30,1
+POST	admin/communications/preview	admin.communications.preview	App\Http\Controllers\CommunicationsController@preview	web,authorize,role:admin,throttle:90,1
+PUT	admin/communications/{communication}	admin.communications.update	App\Http\Controllers\CommunicationsController@update	web,authorize,role:admin
+POST	admin/communications/{communication}/withdraw	admin.communications.withdraw	App\Http\Controllers\CommunicationsController@withdraw	web,authorize,role:admin
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	admin/customize	admin.customize	App\Http\Controllers\OptionsController@customize	web,authorize,role:admin
+GET|HEAD	admin/i18n	admin.i18n.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+POST	admin/i18n	admin.i18n.create	App\Http\Controllers\TranslationsController@create	web,authorize,role:admin
+GET|HEAD	admin/i18n/list	admin.i18n.list	App\Http\Controllers\TranslationsController@list	web,authorize,role:admin
+PUT	admin/i18n/{line}	admin.i18n.update	App\Http\Controllers\TranslationsController@update	web,authorize,role:admin
+DELETE	admin/i18n/{line}	admin.i18n.delete	App\Http\Controllers\TranslationsController@delete	web,authorize,role:admin
+POST	admin/notifications/send	admin.notification.send	App\Http\Controllers\NotificationsController@send	web,authorize,role:admin
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	admin/options	admin.options	App\Http\Controllers\OptionsController@options	web,authorize,role:admin
+GET|HEAD	admin/players	admin.players.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+GET|HEAD	admin/players/list	admin.players.list	App\Http\Controllers\PlayersManagementController@list	web,authorize,role:admin
+DELETE	admin/players/{player}	admin.players.delete	App\Http\Controllers\PlayersManagementController@delete	web,authorize,role:admin,Closure
+PUT	admin/players/{player}/name	admin.players.name	App\Http\Controllers\PlayersManagementController@name	web,authorize,role:admin,Closure
+PUT	admin/players/{player}/owner	admin.players.owner	App\Http\Controllers\PlayersManagementController@owner	web,authorize,role:admin,Closure
+PUT	admin/players/{player}/textures	admin.players.texture	App\Http\Controllers\PlayersManagementController@texture	web,authorize,role:admin,Closure
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	admin/plugins/config/{name}	admin.plugins.config	App\Http\Controllers\PluginController@config	web,authorize,role:admin
+GET|HEAD	admin/plugins/data	admin.plugins.data	App\Http\Controllers\PluginController@getPluginData	web,authorize,role:admin
+GET|HEAD	admin/plugins/manage	admin.plugins.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+POST	admin/plugins/manage	admin.plugins.view	App\Http\Controllers\PluginController@manage	web,authorize,role:admin
+GET|HEAD	admin/plugins/market	admin.plugins.market.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+POST	admin/plugins/market/download	admin.plugins.market.download	App\Http\Controllers\MarketController@download	web,authorize,role:admin
+GET|HEAD	admin/plugins/market/list	admin.plugins.market.list	App\Http\Controllers\MarketController@marketData	web,authorize,role:admin
+GET|HEAD	admin/plugins/readme/{name}	admin.plugins.readme	App\Http\Controllers\PluginController@readme	web,authorize,role:admin
+POST	admin/plugins/upload	admin.plugins.upload	App\Http\Controllers\PluginController@upload	web,authorize,role:admin,role:super-admin
+POST	admin/plugins/wget	admin.plugins.wget	App\Http\Controllers\PluginController@wget	web,authorize,role:admin,role:super-admin
+GET|HEAD	admin/reports	admin.reports.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+GET|HEAD	admin/reports/list	admin.reports.list	App\Http\Controllers\ReportController@manage	web,authorize,role:admin
+PUT	admin/reports/{report}	admin.reports.review	App\Http\Controllers\ReportController@review	web,authorize,role:admin
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	admin/resource	admin.resource	App\Http\Controllers\OptionsController@resource	web,authorize,role:admin
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	admin/score	admin.score	App\Http\Controllers\OptionsController@score	web,authorize,role:admin
+GET|HEAD	admin/status	admin.status	App\Http\Controllers\AdminController@status	web,authorize,role:admin
+GET|HEAD	admin/update	admin.update.view	App\Http\Controllers\UpdateController@showUpdatePage	web,authorize,role:admin,role:super-admin
+POST	admin/update/download	admin.update.download	App\Http\Controllers\UpdateController@download	web,authorize,role:admin,role:super-admin
+POST	admin/update/install	admin.update.install	App\Http\Controllers\UpdateController@install	web,authorize,role:admin,role:super-admin,throttle:3,1
+POST	admin/update/upload	admin.update.upload	App\Http\Controllers\UpdateController@upload	web,authorize,role:admin,role:super-admin,throttle:6,1
+GET|HEAD	admin/users	admin.users.view	Illuminate\Routing\ViewController	web,authorize,role:admin
+GET|HEAD	admin/users/list	admin.users.list	App\Http\Controllers\UsersManagementController@list	web,authorize,role:admin
+DELETE	admin/users/{user}	admin.users.delete	App\Http\Controllers\UsersManagementController@delete	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/email	admin.users.email	App\Http\Controllers\UsersManagementController@email	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/nickname	admin.users.nickname	App\Http\Controllers\UsersManagementController@nickname	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/password	admin.users.password	App\Http\Controllers\UsersManagementController@password	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/permission	admin.users.permission	App\Http\Controllers\UsersManagementController@permission	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/score	admin.users.score	App\Http\Controllers\UsersManagementController@score	web,authorize,role:admin,Closure
+PUT	admin/users/{user}/verification	admin.users.verification	App\Http\Controllers\UsersManagementController@verification	web,authorize,role:admin,Closure
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	api		App\Http\Controllers\HomeController@apiRoot	api,throttle:60,1
+GET|HEAD	api/admin/closet/{user}		App\Http\Controllers\ClosetManagementController@list	api,throttle:60,1,auth:oauth,role:admin,scope:ClosetManagement.Read,ClosetManagement.ReadWrite
+POST	api/admin/closet/{user}		App\Http\Controllers\ClosetManagementController@add	api,throttle:60,1,auth:oauth,role:admin,scope:ClosetManagement.ReadWrite
+DELETE	api/admin/closet/{user}		App\Http\Controllers\ClosetManagementController@remove	api,throttle:60,1,auth:oauth,role:admin,scope:ClosetManagement.ReadWrite
+POST	api/admin/notifications		App\Http\Controllers\NotificationsController@send	api,throttle:60,1,auth:oauth,role:admin,scope:Notification.ReadWrite
+GET|HEAD	api/admin/players		App\Http\Controllers\PlayersManagementController@list	api,throttle:60,1,auth:oauth,role:admin,scope:PlayersManagement.Read,PlayersManagement.ReadWrite
+DELETE	api/admin/players/{player}		App\Http\Controllers\PlayersManagementController@delete	api,throttle:60,1,auth:oauth,role:admin,scope:PlayersManagement.ReadWrite,Closure
+PUT	api/admin/players/{player}/name		App\Http\Controllers\PlayersManagementController@name	api,throttle:60,1,auth:oauth,role:admin,scope:PlayersManagement.ReadWrite,Closure
+PUT	api/admin/players/{player}/owner		App\Http\Controllers\PlayersManagementController@owner	api,throttle:60,1,auth:oauth,role:admin,scope:PlayersManagement.ReadWrite,Closure
+PUT	api/admin/players/{player}/textures		App\Http\Controllers\PlayersManagementController@texture	api,throttle:60,1,auth:oauth,role:admin,scope:PlayersManagement.ReadWrite,Closure
+GET|HEAD	api/admin/reports		App\Http\Controllers\ReportController@manage	api,throttle:60,1,auth:oauth,role:admin,scope:ReportsManagement.Read,ReportsManagement.ReadWrite
+PUT	api/admin/reports/{report}		App\Http\Controllers\ReportController@review	api,throttle:60,1,auth:oauth,role:admin,scope:ReportsManagement.ReadWrite
+GET|HEAD	api/admin/users	list	App\Http\Controllers\UsersManagementController@list	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.Read,UsersManagement.ReadWrite
+DELETE	api/admin/users/{user}	delete	App\Http\Controllers\UsersManagementController@delete	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/email	email	App\Http\Controllers\UsersManagementController@email	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/nickname	nickname	App\Http\Controllers\UsersManagementController@nickname	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/password	password	App\Http\Controllers\UsersManagementController@password	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/permission	permission	App\Http\Controllers\UsersManagementController@permission	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/score	score	App\Http\Controllers\UsersManagementController@score	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+PUT	api/admin/users/{user}/verification	verification	App\Http\Controllers\UsersManagementController@verification	api,throttle:60,1,auth:oauth,role:admin,scope:UsersManagement.ReadWrite,Closure
+GET|HEAD	api/closet		App\Http\Controllers\ClosetController@getClosetData	api,throttle:60,1,auth:oauth,scope:Closet.Read,Closet.ReadWrite
+POST	api/closet		App\Http\Controllers\ClosetController@add	api,throttle:60,1,auth:oauth,scope:Closet.ReadWrite
+PUT	api/closet/{tid}		App\Http\Controllers\ClosetController@rename	api,throttle:60,1,auth:oauth,scope:Closet.ReadWrite
+DELETE	api/closet/{tid}		App\Http\Controllers\ClosetController@remove	api,throttle:60,1,auth:oauth,scope:Closet.ReadWrite
+GET|HEAD	api/players		App\Http\Controllers\PlayerController@list	api,throttle:60,1,auth:oauth,scope:Player.Read,Player.ReadWrite
+POST	api/players		App\Http\Controllers\PlayerController@add	api,throttle:60,1,auth:oauth,scope:Player.ReadWrite
+DELETE	api/players/{player}		App\Http\Controllers\PlayerController@delete	api,throttle:60,1,auth:oauth,scope:Player.ReadWrite,Closure
+PUT	api/players/{player}/name		App\Http\Controllers\PlayerController@rename	api,throttle:60,1,auth:oauth,scope:Player.ReadWrite,Closure
+PUT	api/players/{player}/textures		App\Http\Controllers\PlayerController@setTexture	api,throttle:60,1,auth:oauth,scope:Player.ReadWrite,Closure
+DELETE	api/players/{player}/textures		App\Http\Controllers\PlayerController@clearTexture	api,throttle:60,1,auth:oauth,scope:Player.ReadWrite,Closure
+GET|HEAD	api/user		App\Http\Controllers\UserController@user	api,throttle:60,1,auth:oauth,scope:User.Read
+GET|HEAD	api/user/notifications		App\Http\Controllers\NotificationsController@all	api,throttle:60,1,auth:oauth,scope:Notification.Read
+POST	api/user/notifications/{id}		App\Http\Controllers\NotificationsController@read	api,throttle:60,1,auth:oauth,scope:Notification.Read
+GET|HEAD	auth/bind	auth.bind.view	Illuminate\Routing\ViewController	web,authorize,App\Http\Middleware\EnsureEmailFilled
+POST	auth/bind	auth.bind.verify	App\Http\Controllers\AuthController@fillEmail	web,authorize,App\Http\Middleware\EnsureEmailFilled
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	auth/captcha	auth.captcha	App\Http\Controllers\AuthController@captcha	web
+GET|HEAD	auth/forgot	auth.forgot	App\Http\Controllers\AuthController@forgot	web,guest
+POST	auth/forgot	auth.handle.forgot	App\Http\Controllers\AuthController@handleForgot	web,guest
+GET|HEAD	auth/login	auth.login	App\Http\Controllers\AuthController@login	web,guest
+POST	auth/login	auth.handle.login	App\Http\Controllers\AuthController@handleLogin	web,guest
+POST	auth/logout	auth.logout	App\Http\Controllers\AuthController@logout	web,authorize
+GET|HEAD	auth/register	auth.register	App\Http\Controllers\AuthController@register	web,guest
+POST	auth/register	auth.handle.register	App\Http\Controllers\AuthController@handleRegister	web,guest
+GET|HEAD	auth/reset/{uid}	auth.reset	App\Http\Controllers\AuthController@reset	web,guest
+POST	auth/reset/{uid}	auth.handle.reset	App\Http\Controllers\AuthController@handleReset	web,guest
+GET|HEAD	auth/verify/{user}	auth.verify	App\Http\Controllers\AuthController@verify	web
+POST	auth/verify/{user}	auth.handle.verify	App\Http\Controllers\AuthController@handleVerify	web
+GET|HEAD	avatar/hash/{hash}	avatar.hash	App\Http\Controllers\TextureController@avatarByHash	
+GET|HEAD	avatar/player/{name}	avatar.player	App\Http\Controllers\TextureController@avatarByPlayer	cache.headers:etag;public;max_age=31536000
+GET|HEAD	avatar/user/{uid}	avatar.user	App\Http\Controllers\TextureController@avatarByUser	cache.headers:etag;public;max_age=31536000
+GET|HEAD	avatar/{tid}	avatar.texture	App\Http\Controllers\TextureController@avatarByTexture	cache.headers:etag;public;max_age=31536000
+GET|HEAD	csl/textures/{hash}		App\Http\Controllers\TextureController@texture	cache.headers:etag;public;max_age=31536000
+GET|HEAD	csl/{player}.json		App\Http\Controllers\TextureController@json	cache.headers:public;max_age=31536000
+GET|HEAD	oauth/authorize	passport.authorizations.authorize	Laravel\Passport\Http\Controllers\AuthorizationController@authorize	web,auth,verified
+POST	oauth/authorize	passport.authorizations.approve	Laravel\Passport\Http\Controllers\ApproveAuthorizationController@approve	web,auth:web,auth,verified
+DELETE	oauth/authorize	passport.authorizations.deny	Laravel\Passport\Http\Controllers\DenyAuthorizationController@deny	web,auth:web,auth,verified
+GET|HEAD	oauth/clients	passport.clients.index	Laravel\Passport\Http\Controllers\ClientController@forUser	web,auth:web,auth,verified
+POST	oauth/clients	passport.clients.store	Laravel\Passport\Http\Controllers\ClientController@store	web,auth:web,auth,verified
+PUT	oauth/clients/{client_id}	passport.clients.update	Laravel\Passport\Http\Controllers\ClientController@update	web,auth:web,auth,verified
+DELETE	oauth/clients/{client_id}	passport.clients.destroy	Laravel\Passport\Http\Controllers\ClientController@destroy	web,auth:web,auth,verified
+GET|HEAD	oauth/personal-access-tokens	passport.personal.tokens.index	Laravel\Passport\Http\Controllers\PersonalAccessTokenController@forUser	web,auth:web
+POST	oauth/personal-access-tokens	passport.personal.tokens.store	Laravel\Passport\Http\Controllers\PersonalAccessTokenController@store	web,auth:web
+DELETE	oauth/personal-access-tokens/{token_id}	passport.personal.tokens.destroy	Laravel\Passport\Http\Controllers\PersonalAccessTokenController@destroy	web,auth:web
+GET|HEAD	oauth/scopes	passport.scopes.index	Laravel\Passport\Http\Controllers\ScopeController@all	web,auth:web
+POST	oauth/token	passport.token	Laravel\Passport\Http\Controllers\AccessTokenController@issueToken	throttle
+POST	oauth/token/refresh	passport.token.refresh	Laravel\Passport\Http\Controllers\TransientTokenController@refresh	web,auth:web
+GET|HEAD	oauth/tokens	passport.tokens.index	Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController@forUser	web,auth:web,auth,verified
+DELETE	oauth/tokens/{token_id}	passport.tokens.destroy	Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController@destroy	web,auth:web,auth,verified
+GET|HEAD	preview/hash/{hash}	preview.hash	App\Http\Controllers\TextureController@previewByHash	
+GET|HEAD	preview/{texture}	preview.texture	App\Http\Controllers\TextureController@preview	Illuminate\Routing\Middleware\SubstituteBindings,cache.headers:etag;public;max_age=31536000
+GET|HEAD	raw/{tid}		App\Http\Controllers\TextureController@raw	cache.headers:etag;public;max_age=31536000
+GET|HEAD	setup	setup.view	Illuminate\Routing\ViewController	web,setup
+GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS|QUERY	setup/database	setup.database	App\Http\Controllers\SetupController@database	web,setup
+POST	setup/finish	setup.finish	App\Http\Controllers\SetupController@finish	web,setup
+GET|HEAD	setup/info	setup.info	Illuminate\Routing\ViewController	web,setup
+GET|HEAD	skinlib	skinlib.home	Illuminate\Routing\ViewController	web
+GET|HEAD	skinlib/info/{texture}	skinlib.info	App\Http\Controllers\SkinlibController@info	web,Closure
+GET|HEAD	skinlib/list	skinlib.list	App\Http\Controllers\SkinlibController@library	web
+POST	skinlib/report	skinlib.report	App\Http\Controllers\ReportController@submit	web,authorize,verified
+GET|HEAD	skinlib/show/{texture}	skinlib.show	App\Http\Controllers\SkinlibController@show	web,Closure
+GET|HEAD	skinlib/upload	skinlib.upload	App\Http\Controllers\SkinlibController@upload	web,authorize,verified
+POST	texture	texture.upload	App\Http\Controllers\SkinlibController@handleUpload	web,authorize,verified
+GET|HEAD	texture/{texture}	texture.info	App\Http\Controllers\SkinlibController@info	web,Closure
+DELETE	texture/{texture}	texture.delete	App\Http\Controllers\SkinlibController@delete	web,authorize,verified,Closure
+PUT	texture/{texture}/name	texture.name	App\Http\Controllers\SkinlibController@rename	web,authorize,verified,Closure
+PUT	texture/{texture}/privacy	texture.privacy	App\Http\Controllers\SkinlibController@privacy	web,authorize,verified,Closure
+PUT	texture/{texture}/type	texture.type	App\Http\Controllers\SkinlibController@type	web,authorize,verified,Closure
+GET|HEAD	textures/{hash}		App\Http\Controllers\TextureController@texture	cache.headers:etag;public;max_age=31536000
+GET|HEAD	user	user.home	App\Http\Controllers\UserController@index	web,authorize
+GET|HEAD	user/closet	user.closet.view	App\Http\Controllers\ClosetController@index	web,authorize
+POST	user/closet	user.closet.add	App\Http\Controllers\ClosetController@add	web,authorize
+GET|HEAD	user/closet/ids	user.closet.ids	App\Http\Controllers\ClosetController@allIds	web,authorize
+GET|HEAD	user/closet/list	user.closet.list	App\Http\Controllers\ClosetController@getClosetData	web,authorize
+PUT	user/closet/{tid}	user.closet.rename	App\Http\Controllers\ClosetController@rename	web,authorize
+DELETE	user/closet/{tid}	user.closet.remove	App\Http\Controllers\ClosetController@remove	web,authorize
+PUT	user/dark-mode	user.dark-mode	App\Http\Controllers\UserController@toggleDarkMode	web,authorize
+POST	user/email-verification	user.email-verification	App\Http\Controllers\UserController@sendVerificationEmail	web,authorize
+GET|HEAD	user/inbox	user.inbox	App\Http\Controllers\CommunicationsController@inbox	web,authorize
+GET|HEAD	user/inbox/{id}	user.inbox.message	App\Http\Controllers\CommunicationsController@message	web,authorize
+POST	user/notifications/{id}	user.notification.read	App\Http\Controllers\NotificationsController@read	web,authorize
+GET|HEAD	user/oauth/manage	user.	Illuminate\Routing\ViewController	web,authorize,verified
+GET|HEAD	user/player	user.player.view	App\Http\Controllers\PlayerController@index	web,authorize,verified
+POST	user/player	user.player.add	App\Http\Controllers\PlayerController@add	web,authorize,verified
+GET|HEAD	user/player/list	user.player.list	App\Http\Controllers\PlayerController@list	web,authorize,verified
+DELETE	user/player/{player}	user.player.delete	App\Http\Controllers\PlayerController@delete	web,authorize,verified,Closure
+PUT	user/player/{player}/name	user.player.rename	App\Http\Controllers\PlayerController@rename	web,authorize,verified,Closure
+PUT	user/player/{player}/textures	user.player.set	App\Http\Controllers\PlayerController@setTexture	web,authorize,verified,Closure
+DELETE	user/player/{player}/textures	user.player.clear	App\Http\Controllers\PlayerController@clearTexture	web,authorize,verified,Closure
+GET|HEAD	user/profile	user.profile.view	App\Http\Controllers\UserController@profile	web,authorize
+POST	user/profile	user.profile.handle.profile	App\Http\Controllers\UserController@handleProfile	web,authorize
+POST	user/profile/avatar	user.profile.avatar	App\Http\Controllers\UserController@setAvatar	web,authorize
+GET|HEAD	user/reports	user.list	App\Http\Controllers\ReportController@track	web,authorize
+GET|HEAD	user/score-info	user.score	App\Http\Controllers\UserController@scoreInfo	web,authorize
+POST	user/sign	user.sign	App\Http\Controllers\UserController@sign	web,authorize
+GET|HEAD	{player}.json		App\Http\Controllers\TextureController@json	cache.headers:public;max_age=31536000

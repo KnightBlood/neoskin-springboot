@@ -1,0 +1,39 @@
+# Build output
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+
+# Runtime data / generated files
+storage/
+public/
+*.sqlite
+*.sqlite-journal
+*.db
+logs/
+*.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+surefire-reports/
+
+# DynamoDB Local runtime metadata
+dynamodb-local-metadata.json

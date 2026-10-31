@@ -1,0 +1,160 @@
+# =============================================================================
+# NeoSkin Spring Boot — 运行时配置
+#
+# 本文件逐项对应源项目 `blessing-skin-server-Laravel13` 的 `.env` 变量，
+# 键名、默认值、语义全部保持一致（见 AGENTS.md §4.3「禁止改动 .env 运行时行为」）。
+# 迁移到 Java 后仍通过同名环境变量配置，运维脚本无需修改。
+# =============================================================================
+
+spring:
+  application:
+    name: blessing_skin
+  main:
+    # 关键：本项目不使用任何 Servlet 容器，Web 层由 Vert.x 独立承载
+    web-application-type: none
+    banner-mode: off
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 表结构由 NeoSkin 自己的 SchemaInstaller 创建（与源 migration 逐字对齐），
+      # 绝不允许 Hibernate 生成或修改任何 DDL
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 30
+        order_inserts: true
+        order_updates: true
+  jackson:
+    default-property-inclusion: always
+
+neoskin:
+  # ---------------------------------------------------------------- 应用 ----
+  # APP_ENV / APP_DEBUG / APP_KEY / APP_FALLBACK_LOCALE
+  env: ${APP_ENV:production}
+  debug: ${APP_DEBUG:false}
+  # APP_KEY：AES-256-CBC 密钥，用于 Cookie 加密与 Passport 密钥派生
+  key: ${APP_KEY:}
+  fallback-locale: ${APP_FALLBACK_LOCALE:en}
+  # 与 config/app.php 的 'version' 一致
+  version: 6.0.11_patch
+  # 与 config/app.php 的 'update_source' 一致
+  update-source: ${UPDATE_SOURCE:https://skin.blessing.dreamcraft.eu.org/update.json}
+
+  # ------------------------------------------------------------ 数据库 ----
+  # 与 config/database.php 完全一致的 5 种驱动（另有 mariadb 走 mysql 方言族）
+  database:
+    connection: ${DB_CONNECTION:mysql}
+    url: ${DATABASE_URL:}
+    host: ${DB_HOST:127.0.0.1}
+    port: ${DB_PORT:}
+    name: ${DB_DATABASE:blessingskin}
+    username: ${DB_USERNAME:forge}
+    password: ${DB_PASSWORD:}
+    prefix: ${DB_PREFIX:}
+    socket: ${DB_SOCKET:}
+    # MySQL 专用（对应 config/database.php 的 MYSQL_ATTR_SSL_CA）
+    ssl-ca: ${MYSQL_ATTR_SSL_CA:}
+    # SQLite 外键约束（对应 DB_FOREIGN_KEYS）
+    foreign-keys: ${DB_FOREIGN_KEYS:true}
+    # SQL Server 专用（mssql-jdbc 12+ 客户端默认要加密；自签证书环境需信任）
+    encrypt: ${DB_ENCRYPT:true}
+    trust-server-certificate: ${DB_TRUST_SERVER_CERTIFICATE:false}
+
+  # --------------------------------------------------------------- HTTP ----
+  http:
+    host: ${APP_HOST:0.0.0.0}
+    port: ${APP_PORT:8080}
+    # 上传大小上限（MB），对应 Laravel 的 post_max_size 语义
+    max-body-size: ${APP_MAX_BODY_SIZE:64}
+
+  # ------------------------------------------------------- 会话 / 缓存 ----
+  # 显式固定为 Laravel 10 ~ 12 时期的取值，保证升级/迁移后 Cookie 名不变
+  session:
+    cookie: ${SESSION_COOKIE:BS_SESSION}
+    lifetime-minutes: ${SESSION_LIFETIME:120}
+    # 对应 config/session.php 的 driver（file / redis / array）
+    driver: ${SESSION_DRIVER:file}
+    path: /
+    same-site: ${SESSION_SAME_SITE:lax}
+    secure: ${SESSION_SECURE_COOKIE:false}
+  cache:
+    prefix: ${CACHE_PREFIX:blessing_skin_cache_}
+    # 对应 config/cache.php 的 default（file / redis / array）
+    driver: ${CACHE_DRIVER:file}
+    directory: ${CACHE_DIR:storage/framework/cache}
+    # 对应 config/database.php 的 redis.cache 连接（REDIS_CACHE_DB 默认 1）
+    redis-host: ${REDIS_HOST:127.0.0.1}
+    redis-port: ${REDIS_PORT:6379}
+    redis-username: ${REDIS_USERNAME:}
+    redis-password: ${REDIS_PASSWORD:}
+    redis-database: ${REDIS_CACHE_DB:1}
+    # 连接级 URL/前缀（源 config/database.php 的 redis.options.prefix）
+    redis-url: ${REDIS_URL:}
+    redis-prefix: ${REDIS_PREFIX:blessing_skin_database_}
+    # 对应 config/cache.php 的 memcached.servers（REDIS_* 之外单独一组）
+    memcached-host: ${MEMCACHED_HOST:127.0.0.1}
+    memcached-port: ${MEMCACHED_PORT:11211}
+    # 对应 config/cache.php 的 dynamodb 段
+    dynamodb-endpoint: ${DYNAMODB_ENDPOINT:}
+    dynamodb-region: ${AWS_DEFAULT_REGION:us-east-1}
+    dynamodb-table: ${DYNAMODB_CACHE_TABLE:cache}
+    dynamodb-access-key: ${AWS_ACCESS_KEY_ID:}
+    dynamodb-secret-key: ${AWS_SECRET_ACCESS_KEY:}
+
+  # -------------------------------------------------------------- 安全 ----
+  # config/secure.php
+  secure:
+    cipher: ${PWD_METHOD:BCRYPT}
+    salt: ${SALT:}
+  # BCRYPT_ROUNDS，对应 config/hashing.php 的 bcrypt.rounds
+  # 注意：源项目密码走 config/secure.php 的 cipher，最终调用 PHP 的 password_hash()；
+  # PHP 8.4 起 PASSWORD_BCRYPT 的默认 cost 已从 10 提升到 12，因此这里默认 12，
+  # 保证新生成的哈希与 PHP 版完全一致（校验不受 cost 影响）。
+  #
+  # 这里必须区分两个成本因子（见 NeoSkinSettings.Hashing 的表格）：
+  #   password-rounds      → users.password，走 PHP password_hash() 默认值 = 12
+  #   client-secret-rounds → oauth_clients.secret，走 config/hashing.php = BCRYPT_ROUNDS = 10
+  hashing:
+    password-rounds: ${NEOSKIN_PASSWORD_BCRYPT_ROUNDS:12}
+    client-secret-rounds: ${BCRYPT_ROUNDS:10}
+
+  # ---------------------------------------------------------- 存储路径 ----
+  storage:
+    # 对应 Laravel storage_path()
+    root: ${STORAGE_PATH:storage}
+    # 纹理文件磁盘（Storage::disk('textures')）；FS_DRIVER=s3 时作为对象前缀
+    textures: ${TEXTURES_PATH:storage/textures}
+    # 对应 config/filesystems.php 的 FS_DRIVER（local / s3）与 s3 盘
+    fs-driver: ${FS_DRIVER:local}
+    s3-bucket: ${AWS_BUCKET:}
+    s3-endpoint: ${AWS_ENDPOINT:}
+    s3-region: ${AWS_DEFAULT_REGION:us-east-1}
+    s3-access-key: ${AWS_ACCESS_KEY_ID:}
+    s3-secret-key: ${AWS_SECRET_ACCESS_KEY:}
+
+  # -------------------------------------------------------------- 插件 ----
+  plugins:
+    directory: ${PLUGINS_DIR:plugins}
+    url: ${PLUGINS_URL:}
+    registry: ${PLUGINS_REGISTRY:}
+    # PF4J Java 插件（与 PHP 插件目录分开；jar 放在这里才会被加载）
+    java-directory: ${PLUGINS_JAVA_DIR:plugins-java}
+    java-enabled: ${PLUGINS_JAVA_ENABLED:true}
+
+  # -------------------------------------------------------------- 邮件 ----
+  mail:
+    mailer: ${MAIL_MAILER:smtp}
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    encryption: ${MAIL_ENCRYPTION:}
+    from-address: ${MAIL_FROM_ADDRESS:}
+    from-name: ${MAIL_FROM_NAME:}
+
+logging:
+  level:
+    root: INFO
+    com.neoskin: ${LOG_LEVEL:INFO}
