@@ -89,6 +89,15 @@ java -jar app.jar --neoskin.command=up
 
 `--route-list-json` 仍保留（前端 `yarn build:urls` 用）。
 
+## CI（GitHub Actions）
+
+`.github/workflows/ci.yml`：
+
+| job | 内容 |
+| --- | --- |
+| `Build frontend (public/app)` | 从 `KnightBlood/blessing-skin-server-Laravel13` 取源码，node 24 + yarn 1.22.22 执行 `yarn install --frozen-lockfile` + `yarn build`，再补上 `build-php85.py` 额外拷贝的 `bg.webp` / `favicon.ico` / `standalone/*.js`，上传 108 个文件 |
+| `verify (sqlite / mysql / mariadb / pgsql / sqlsrv)` × 5 | 下载前端 artifact，启动对应数据库容器，`mvn clean verify -Dfrontend.app.dir=...` |
+
 ## 已知限制
 
 - PHP 插件只能安装/启用/管理，**不能执行**（没有 PHP 运行时）。
