@@ -8,6 +8,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 失败诊断步骤会往 ci-logs-<db> 分支推报告（见下方 Publish failure diagnostics）
+permissions:
+  contents: write
+
 jobs:
   # 前端预编译产物（public/app）不提交到本仓库。源仓库 KnightBlood/blessing-skin-server-Laravel13
   # 的发布包里有 public/app，但发布包可能落后于 main；这里按它 CI 的做法（build-php85.py）
@@ -204,5 +208,38 @@ jobs:
         shell: bash
 
       - name: mvn clean verify
-        run: mvn clean verify -Dfrontend.app.dir="$GITHUB_WORKSPACE/frontend/public/app"
+        run: |
+          set -o pipefail
+          mvn clean verify -Dfrontend.app.dir="$GITHUB_WORKSPACE/frontend/public/app" \
+            2>&1 | tee "/tmp/mvn-${{ matrix.database }}.log"
+        shell: bash
+
+      # 失败诊断：Actions 日志需要仓库权限才能下载，把关键信息推到
+      # ci-logs-<db> 分支，用 raw.githubusercontent.com 匿名读取。
+      - name: Publish failure diagnostics
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          report="/tmp/report-${{ matrix.database }}.txt"
+          {
+            echo "job: verify (${{ matrix.database }})  commit: $GITHUB_SHA"
+            echo "--- surefire failures ---"
+            grep -h -E '<<< (FAILURE|ERROR)!' target/surefire-reports/*.txt 2>/dev/null || true
+            echo "--- surefire details ---"
+            grep -h -A 15 -E '<<< (FAILURE|ERROR)!' target/surefire-reports/*.txt 2>/dev/null \
+              | head -400 || true
+            echo "--- maven tail ---"
+            tail -250 "/tmp/mvn-${{ matrix.database }}.log" 2>/dev/null || true
+          } > "$report"
+          rm -rf /tmp/pub && mkdir -p /tmp/pub && cd /tmp/pub
+          git init -q -b "ci-logs-${{ matrix.database }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp "$report" report.txt
+          git add report.txt
+          git commit -qm "ci diagnostics (${{ matrix.database }})"
+          git push -f \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/ci-logs-${{ matrix.database }}"
         shell: bash
