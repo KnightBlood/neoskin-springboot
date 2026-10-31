@@ -27,6 +27,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 前端预编译产物（public/app）不提交到本仓库，构建时从源仓库取：
+      # 只 sparse checkout public/app，避免拉整个 Laravel 仓库。
+      - name: Checkout prebuilt frontend
+        uses: actions/checkout@v4
+        with:
+          repository: KnightBlood/blessing-skin-server-Laravel13
+          path: frontend
+          sparse-checkout: public/app
+          sparse-checkout-cone-mode: false
+
+      - name: Check frontend artifacts
+        run: |
+          test -d "$GITHUB_WORKSPACE/frontend/public/app" \
+            || { echo "public/app missing in frontend checkout"; exit 1; }
+          echo "frontend files: $(find "$GITHUB_WORKSPACE/frontend/public/app" -type f | wc -l)"
+        shell: bash
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -142,4 +159,5 @@ jobs:
         shell: bash
 
       - name: mvn clean verify
-        run: mvn clean verify
+        run: mvn clean verify -Dfrontend.app.dir="$GITHUB_WORKSPACE/frontend/public/app"
+        shell: bash

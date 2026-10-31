@@ -21,6 +21,12 @@
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!--
+      预编译前端产物目录（源仓库 public/app）。
+      本地默认指向同级 blessing-skin-server-Laravel13；CI 里 checkout 前端仓库后
+      用 -Dfrontend.app.dir=... 覆盖。
+    -->
+    <frontend.app.dir>${project.basedir}/../blessing-skin-server-Laravel13/public/app</frontend.app.dir>
 
     <!-- Web 层：Vert.x 取代 Tomcat / Jetty / Undertow（见 AGENTS.md §4.4） -->
     <vertx.version>5.2.2</vertx.version>
@@ -293,7 +299,7 @@
               <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.basedir}/../blessing-skin-server-Laravel13/public/app</directory>
+                  <directory>${frontend.app.dir}</directory>
                   <targetPath>app</targetPath>
                   <filtering>false</filtering>
                 </resource>

@@ -1,18 +1,19 @@
-# Build output
-target/
-build/
-out/
+# Build output (only repository-root directories; note that `storage/` without
+# a leading slash would also ignore src/main/java/com/neoskin/storage/)
+/target/
+/build/
+/out/
 *.class
 *.jar
 *.war
 
-# Runtime data / generated files
-storage/
-public/
+# Runtime data / generated files (repository root only)
+/storage/
+/public/
 *.sqlite
 *.sqlite-journal
 *.db
-logs/
+/logs/
 *.log
 
 # Environment / secrets
@@ -33,7 +34,7 @@ logs/
 Thumbs.db
 
 # Test artifacts
-surefire-reports/
+/surefire-reports/
 
 # DynamoDB Local runtime metadata
 dynamodb-local-metadata.json
