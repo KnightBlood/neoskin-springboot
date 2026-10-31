@@ -84,18 +84,18 @@ class JavaPluginLoadingTest {
                 }
                 """);
 
-        // surefire 在 CI（Linux）用 manifest-only classpath，java.class.path 只有一个
-        // booter jar，javac 拿不到 pf4j → 插件类编译失败。surefire 会额外提供
-        // surefire.test.class.path（真实条目全在里面）。
         String classpath = System.getProperty("surefire.test.class.path");
         if (classpath == null || classpath.isBlank()) {
             classpath = System.getProperty("java.class.path");
         }
-        int result = compiler.run(null, null, null,
+        java.io.ByteArrayOutputStream javacErr = new java.io.ByteArrayOutputStream();
+        int result = compiler.run(null, null, javacErr,
                 "-classpath", classpath, "-d", classes.toString(),
                 src.resolve("DemoPlugin.java").toString(),
                 src.resolve("DemoExtension.java").toString());
-        assertEquals(0, result, "插件类编译失败");
+        assertEquals(0, result, "插件类编译失败:\n" + javacErr
+                + "\nclasspath 前 400 字符: "
+                + (classpath == null ? "null" : classpath.substring(0, Math.min(400, classpath.length()))));
 
         Path pluginRoot = dir.resolve("plugins-java");
         Files.createDirectories(pluginRoot);

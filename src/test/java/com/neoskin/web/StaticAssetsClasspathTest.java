@@ -38,7 +38,18 @@ class StaticAssetsClasspathTest {
                 .end("dynamic:" + ctx.request().path()));
         int port = listen(router);
 
-        HttpResponse<String> app = get(port, "/app/app.7278b90.js");
+        // webpack 的入口文件名带内容哈希，不能写死（Linux/Windows 构建可能不同）；
+        // 以打包进来的 app.twig 为准，它引用哪个就用哪个。
+        String twig;
+        try (var in = StaticAssetsClasspathTest.class.getResourceAsStream("/static/app/app.twig")) {
+            assertTrue(in != null, "缺少 classpath:/static/app/app.twig（mvn package 未复制前端？）");
+            twig = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        var matcher = java.util.regex.Pattern.compile("/app/([^\"']+\\.js)").matcher(twig);
+        assertTrue(matcher.find(), "app.twig 应引用入口 JS：" + twig);
+        String entry = matcher.group(1);
+
+        HttpResponse<String> app = get(port, "/app/" + entry);
         assertEquals(200, app.statusCode());
         assertTrue(app.body().length() > 10, "classpath 前端产物应有内容");
         assertTrue(app.headers().firstValue("Content-Type").orElse("").contains("javascript"),

@@ -64,6 +64,11 @@ class ApplicationContextTest {
     static void clearRuntime() {
         com.neoskin.service.cache.CacheRuntime.set(null);
         com.neoskin.storage.TextureStorageRuntime.set(null);
+        // WebConfig 会把「未读通知」composer 注入 PageView 的静态单例，指向本容器的
+        // DataSource；容器关闭后临时库已删除，残留会让后续渲染登录页的测试查到空库
+        // （no such table: notifications，测试执行顺序不同就必现）。
+        com.neoskin.web.view.PageView.setInboxProvider(null);
+        com.neoskin.oauth.OAuthRuntime.set(null);
     }
 
     private static Path createTempDir() {

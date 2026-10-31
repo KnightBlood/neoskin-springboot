@@ -162,5 +162,9 @@ class MatrixSpringBootTest {
     @AfterAll
     static void clearRuntime() {
         com.neoskin.service.cache.CacheRuntime.set(null);
+        com.neoskin.storage.TextureStorageRuntime.set(null);
+        // 同 ApplicationContextTest：容器把通知 composer 注入 PageView 静态单例
+        com.neoskin.web.view.PageView.setInboxProvider(null);
+        com.neoskin.oauth.OAuthRuntime.set(null);
     }
 }
