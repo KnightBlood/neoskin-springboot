@@ -1509,6 +1509,17 @@
     ]
   },
   {
+    "method": "POST",
+    "uri": "skinlib",
+    "name": "skinlib.upload.submit",
+    "action": "App\\Http\\Controllers\\SkinlibController@handleUpload",
+    "middleware": [
+      "web",
+      "authorize",
+      "verified"
+    ]
+  },
+  {
     "method": "GET|HEAD",
     "uri": "skinlib/info/{texture}",
     "name": "skinlib.info",

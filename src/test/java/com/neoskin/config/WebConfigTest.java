@@ -180,16 +180,16 @@ class WebConfigTest {
             // 未知动作 → null（路由层据此回 501）
             assertNull(resolver.resolve("App\\Http\\Controllers\\DoesNotExistController@missing"));
 
-            // routes.json 的 173 条路由，action 全部都能解析出 handler
+            // routes.json 的 174 条路由，action 全部都能解析出 handler
             for (com.neoskin.web.RouteDefinition route : Routes.load().all()) {
                 assertTrue(resolver.resolve(route.action(), route.uri()) != null
                                 || resolver.resolve(route.action()) != null,
                         route.uri() + " [" + route.action() + "]");
             }
 
-            // 路由表仍是 173 条
+            // 路由表仍是 174 条
             assertNotNull(config.routes());
-            org.junit.jupiter.api.Assertions.assertEquals(173, config.routes().count());
+            org.junit.jupiter.api.Assertions.assertEquals(174, config.routes().count());
         } finally {
             com.neoskin.web.view.PageView.setInboxProvider(null);
             com.neoskin.oauth.OAuthRuntime.set(null);

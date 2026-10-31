@@ -241,7 +241,8 @@ public final class SkinlibController {
                         contentPolicy == null ? "" : String.valueOf(contentPolicy)));
 
                 Map<String, Object> vars = pageVars(ctx, user,
-                        translator.trans("general.skins", Map.of(), locale), locale, "skinlib");
+                        translator.trans("skinlib.upload.title", Map.of(), locale), locale,
+                        "skinlib");
                 vars.put("gridRows", List.of(
                         List.of(
                                 col("md-6", "skinlib/widgets/upload/input"),

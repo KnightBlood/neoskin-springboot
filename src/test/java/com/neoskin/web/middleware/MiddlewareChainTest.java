@@ -25,14 +25,16 @@ class MiddlewareChainTest {
                 "App\\Http\\Middleware\\DetectLanguagePrefer"), expanded);
     }
 
-    /** web 组展开保持组内顺序（EncryptCookies 领头）。 */
+    /** web 组展开保持组内顺序（EncryptCookies 领头，Passport 的 CreateFreshApiToken 收尾）。 */
     @Test
     void webGroupExpandsInOrder() {
         List<String> expanded = MiddlewareChain.expand(List.of("web"));
-        assertEquals(5 + 8, expanded.size());
+        assertEquals(5 + 9, expanded.size());
         assertEquals("Illuminate\\Cookie\\Middleware\\EncryptCookies", expanded.get(5));
         assertEquals("Illuminate\\View\\Middleware\\ShareErrorsFromSession", expanded.get(8));
-        assertEquals("Illuminate\\Routing\\Middleware\\SubstituteBindings", expanded.getLast());
+        assertEquals("Illuminate\\Routing\\Middleware\\SubstituteBindings", expanded.get(12));
+        assertEquals("Laravel\\Passport\\Http\\Middleware\\CreateFreshApiToken",
+                expanded.getLast());
     }
 
     /** authorize 组：auth:web 是嵌组（别名展开），其余三个按序。 */
@@ -48,7 +50,7 @@ class MiddlewareChainTest {
     @Test
     void mixedGroupsStayWrittenOrder() {
         List<String> expanded = MiddlewareChain.expand(List.of("web", "api"));
-        assertEquals(5 + 8 + 1, expanded.size());
+        assertEquals(5 + 9 + 1, expanded.size());
         assertEquals("Illuminate\\Routing\\Middleware\\SubstituteBindings", expanded.getLast());
     }
 

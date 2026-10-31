@@ -22,12 +22,12 @@ class RouteListJsonTest {
     private static final Routes ROUTES = Routes.load();
 
     @Test
-    void emits173EntriesInRegistrationOrder() {
+    void emits174EntriesInRegistrationOrder() {
         String json = RouteListJson.render(ROUTES);
         Object decoded = PhpJson.decode(json);
 
         assertTrue(decoded instanceof PhpJson.Array, "顶层必须是 JSON 数组");
-        assertEquals(173, ((PhpJson.Array) decoded).size());
+        assertEquals(174, ((PhpJson.Array) decoded).size());
     }
 
     @Test
@@ -69,7 +69,7 @@ class RouteListJsonTest {
                 break;
             }
         }
-        assertTrue(sawNull, "173 条里有未命名路由（31 条），name 必须是 null");
+        assertTrue(sawNull, "174 条里有未命名路由（31 条），name 必须是 null");
     }
 
     @Test
@@ -100,6 +100,6 @@ class RouteListJsonTest {
 
         String output = buffer.toString("UTF-8").trim();
         assertTrue(output.startsWith("["), "必须是 JSON 数组: " + output.substring(0, 40));
-        assertEquals(173, ((PhpJson.Array) PhpJson.decode(output)).size());
+        assertEquals(174, ((PhpJson.Array) PhpJson.decode(output)).size());
     }
 }

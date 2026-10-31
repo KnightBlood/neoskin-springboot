@@ -16,7 +16,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * Vert.x bootstrap 测试：173 条路由必须全部注册、匹配成功并把未移植
+ * Vert.x bootstrap 测试：174 条路由必须全部注册、匹配成功并把未移植
  * 的 action 兜底成 501、无路由命中兜底 404；服务器壳可起可停。
  */
 class VertxRouteRegistryTest {
@@ -33,10 +33,10 @@ class VertxRouteRegistryTest {
         }
     }
 
-    /** 语料红线：173 条路由（AGENTS.md §2.1 / §6）。 */
+    /** 语料红线：174 条路由（AGENTS.md §2.1 / §6）。 */
     @Test
-    void loadsAll173Routes() {
-        assertEquals(173, routes.count());
+    void loadsAll174Routes() {
+        assertEquals(174, routes.count());
     }
 
     /** action 索引：每个 action 至少一条路由，HomeController@index 能搜到。 */
@@ -65,13 +65,13 @@ class VertxRouteRegistryTest {
                 () -> VertxRouteRegistry.httpMethod("fetch"));
     }
 
-    /** 173 条全部注册（501 兜底）；未命中 404；真实监听口竖向冒烟。 */
+    /** 174 条全部注册（501 兜底）；未命中 404；真实监听口竖向冒烟。 */
     @Test
     void buildsRouterWithAllRoutesAndListens() throws Exception {
         VertxRouteRegistry.BuildResult built =
                 VertxRouteRegistry.build(routes, new EmptyResolver(), vertx);
 
-        assertEquals(173, built.registeredCount());
+        assertEquals(174, built.registeredCount());
 
         int port = present(built.router());
         try {
