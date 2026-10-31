@@ -84,7 +84,13 @@ class JavaPluginLoadingTest {
                 }
                 """);
 
-        String classpath = System.getProperty("java.class.path");
+        // surefire 在 CI（Linux）用 manifest-only classpath，java.class.path 只有一个
+        // booter jar，javac 拿不到 pf4j → 插件类编译失败。surefire 会额外提供
+        // surefire.test.class.path（真实条目全在里面）。
+        String classpath = System.getProperty("surefire.test.class.path");
+        if (classpath == null || classpath.isBlank()) {
+            classpath = System.getProperty("java.class.path");
+        }
         int result = compiler.run(null, null, null,
                 "-classpath", classpath, "-d", classes.toString(),
                 src.resolve("DemoPlugin.java").toString(),

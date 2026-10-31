@@ -224,13 +224,21 @@ jobs:
           report="/tmp/report-${{ matrix.database }}.txt"
           {
             echo "job: verify (${{ matrix.database }})  commit: $GITHUB_SHA"
+            echo "--- static resources ---"
+            echo "frontend files: $(find frontend/public/app -type f 2>/dev/null | wc -l)"
+            echo "target/classes/static files: $(find target/classes/static -type f 2>/dev/null | wc -l)"
+            ls target/classes/static/app 2>/dev/null | head -3
+            echo "target/classes/views files: $(find target/classes/views -type f 2>/dev/null | wc -l)"
             echo "--- surefire failures ---"
             grep -h -E '<<< (FAILURE|ERROR)!' target/surefire-reports/*.txt 2>/dev/null || true
-            echo "--- surefire details ---"
-            grep -h -A 15 -E '<<< (FAILURE|ERROR)!' target/surefire-reports/*.txt 2>/dev/null \
-              | head -400 || true
+            echo "--- surefire full (failing classes) ---"
+            grep -l -E '<<< (FAILURE|ERROR)!' target/surefire-reports/*.txt 2>/dev/null \
+              | xargs -r cat | head -1200 || true
+            echo "--- server exceptions ---"
+            grep -n -A 25 -E ' ERROR ' "/tmp/mvn-${{ matrix.database }}.log" 2>/dev/null \
+              | head -600 || true
             echo "--- maven tail ---"
-            tail -250 "/tmp/mvn-${{ matrix.database }}.log" 2>/dev/null || true
+            tail -60 "/tmp/mvn-${{ matrix.database }}.log" 2>/dev/null || true
           } > "$report"
           rm -rf /tmp/pub && mkdir -p /tmp/pub && cd /tmp/pub
           git init -q -b "ci-logs-${{ matrix.database }}"
