@@ -25,7 +25,10 @@ class PhpVarExportTest {
     private static String sample() throws IOException {
         try (InputStream in = PhpVarExportTest.class.getResourceAsStream("/options-sample.php")) {
             assertTrue(in != null, "缺少测试资源 options-sample.php");
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            // Windows 上 core.autocrlf=true 会把资源文件 checkout 成 CRLF，
+            // 而 PHP 里的多行字符串是 \n；归一化后再解析（同 ErrorPagesTest）。
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                    .replace("\r\n", "\n");
         }
     }
 

@@ -34,7 +34,7 @@ NeoSkinSpringBoot/
     │   ├── application.yml           # 与源 .env 一一对应
     │   ├── views/                    # Thymeleaf 模板
     │   ├── lang/                     # 14 种语言包
-    │   └── codegraph/routes.json     # 173 条路由（唯一权威）
+    │   └── codegraph/routes.json     # 174 条路由（唯一权威）
     └── test/java/                    # 单元 + 端到端测试
 ```
 
@@ -56,7 +56,14 @@ java -jar target/neoskin-springboot-6.0.11_patch-SNAPSHOT.jar
 
 **前端产物**：`mvn package` 会**自动**把源项目 `public/app/`（108 个文件）打进
 jar 的 `static/app/`；部署时没有 `<base>/public/` 也能正常加载前端（classpath
-回退）。只有「想用磁盘上的 public 覆盖 jar 内产物」时才需要：
+回退）。源目录默认是同级仓库 `../blessing-skin-server-Laravel13/public/app`，
+可用属性覆盖（CI 里由 `frontend` job 构建后传入绝对路径）：
+
+```sh
+mvn clean verify -Dfrontend.app.dir=/path/to/public/app
+```
+
+只有「想用磁盘上的 public 覆盖 jar 内产物」时才需要：
 
 ```powershell
 pwsh scripts/prepare-public.ps1

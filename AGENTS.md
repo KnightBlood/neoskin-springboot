@@ -11,7 +11,7 @@
 
 ## 2. 硬约束（不可破坏）
 
-1. **HTTP 接口零变更**：173 条路由的路径/方法/参数/响应结构与源完全一致。
+1. **HTTP 接口零变更**：174 条路由的路径/方法/参数/响应结构与源完全一致。
 2. **数据完全兼容**：17 张表 + 存量数据 + bcrypt 密码（使用 jBCrypt 支持 `$2y$`）+ SHA-256 纹理 hash。
 3. **插件 API 契约**：Hook（7 方法）、PluginManager（13 方法）、Plugin、24 个 Event。
 4. **patch 功能保留**：6.0.3 ~ 6.0.11_patch 全部功能。
@@ -61,13 +61,13 @@ mvn clean verify
 ```
 
 - [ ] 构建无错误
-- [ ] 所有 173 条路由注册成功
+- [ ] 所有 174 条路由注册成功
 - [ ] 数据库 migration 执行无错误
 - [ ] 存量数据可正常读取
 - [ ] bcrypt 密码验证通过
 - [ ] OAuth2 端点与 Passport 响应一致
 - [ ] Minecraft 客户端可正常获取皮肤/披风
-- [ ] 67 个测试用例全部通过
+- [ ] 97 个测试类 / 1085 个测试用例全部通过
 
 ## 7. 进度报告格式
 
@@ -86,7 +86,7 @@ agent 完成一个阶段后必须报告：
 | 文件 | 内容 | 用途 |
 | --- | --- | --- |
 | `CODEGRAPH.md` | 架构总览、17 张表、路由分组、插件 API | 先读这一份建立全局认知 |
-| `codegraph/routes.json` | 173 条路由（method / uri / name / action / middleware） | 1:1 生成路由注册代码 |
+| `codegraph/routes.json` | 174 条路由（method / uri / name / action / middleware） | 1:1 生成路由注册代码 |
 | `codegraph/controllers.json` | 20 个控制器类名 | 对照拆分 Controller |
 | `codegraph/models.json` | 6 个 app 层 Eloquent 模型 | 对照生成 Entity/Model |
 | `codegraph/events.json` | 24 个 Event + 9 个 Listener | 事件总线移植 |
@@ -99,3 +99,10 @@ agent 完成一个阶段后必须报告：
 2. 表结构以 `database/migrations/` 为准（`codegraph` 不含字段级 DDL），字段名/类型/默认值必须逐字对齐。
 3. 若发现 `codegraph` 与源码不一致，以源码为准，并在本文件记录偏差。
 4. 迁移过程中新增的任何映射关系，追加到本目录 `PORT-NOTES.md`，不回写源项目。
+
+已知偏差：
+
+- `routes.json` 原 173 条漏记了源码 `routes/web.php` 里的
+  `Route::post('', 'SkinlibController@handleUpload')`。已按源码补为
+  `skinlib.upload.submit`（middleware: web / authorize / verified），
+  总数 **174**，测试按 174 断言。

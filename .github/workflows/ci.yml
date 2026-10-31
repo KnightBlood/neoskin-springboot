@@ -9,7 +9,56 @@ on:
   workflow_dispatch:
 
 jobs:
+  # 前端预编译产物（public/app）不提交到本仓库。源仓库 KnightBlood/blessing-skin-server-Laravel13
+  # 的发布包里有 public/app，但发布包可能落后于 main；这里按它 CI 的做法（build-php85.py）
+  # 直接 `yarn install --frozen-lockfile && yarn build` 构建一次，供 5 个 DB 矩阵共用。
+  frontend:
+    name: Build frontend (public/app)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: KnightBlood/blessing-skin-server-Laravel13
+          path: frontend
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install and build
+        working-directory: frontend
+        run: |
+          npm install --global yarn@1.22.22
+          yarn install --frozen-lockfile --non-interactive
+          yarn build
+
+      # 与源仓库 tools/build-php85.py 一致：webpack 之外还有 3 个静态文件要放进 public/app
+      - name: Copy non-webpack assets
+        run: |
+          cp frontend/resources/assets/src/images/bg.webp        frontend/public/app/
+          cp frontend/resources/assets/src/images/favicon.ico    frontend/public/app/
+          cp frontend/resources/assets/standalone/*.js           frontend/public/app/
+
+      - name: Check artifacts
+        run: |
+          test -f frontend/public/app/app.twig \
+            || { echo "public/app/app.twig missing after yarn build"; exit 1; }
+          test -f frontend/public/app/style.twig \
+            || { echo "public/app/style.twig missing after yarn build"; exit 1; }
+          test -f frontend/public/app/favicon.ico \
+            || { echo "public/app/favicon.ico missing"; exit 1; }
+          echo "frontend files: $(find frontend/public/app -type f | wc -l)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-app
+          path: frontend/public/app
+          if-no-files-found: error
+          retention-days: 7
+
   verify:
+    needs: frontend
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -27,20 +76,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 前端预编译产物（public/app）不提交到本仓库，构建时从源仓库取：
-      # 只 sparse checkout public/app，避免拉整个 Laravel 仓库。
-      - name: Checkout prebuilt frontend
-        uses: actions/checkout@v4
+      # 前端产物由上面的 frontend job 构建并上传，这里只下载。
+      - uses: actions/download-artifact@v4
         with:
-          repository: KnightBlood/blessing-skin-server-Laravel13
-          path: frontend
-          sparse-checkout: public/app
-          sparse-checkout-cone-mode: false
+          name: frontend-app
+          path: frontend/public/app
 
       - name: Check frontend artifacts
         run: |
-          test -d "$GITHUB_WORKSPACE/frontend/public/app" \
-            || { echo "public/app missing in frontend checkout"; exit 1; }
+          test -f "$GITHUB_WORKSPACE/frontend/public/app/app.twig" \
+            || { echo "public/app missing in downloaded artifact"; exit 1; }
           echo "frontend files: $(find "$GITHUB_WORKSPACE/frontend/public/app" -type f | wc -l)"
         shell: bash
 
