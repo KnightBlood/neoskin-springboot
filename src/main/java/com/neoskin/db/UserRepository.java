@@ -465,7 +465,9 @@ public final class UserRepository {
             if ("password".equals(column) || "remember_token".equals(column)) {
                 continue;
             }
-            Object value = rs.getObject(i);
+            Object value = DbValues.isDateColumn(column)
+                    ? DbValues.dateTime(rs, column)
+                    : rs.getObject(i);
             switch (column) {
                 case "uid", "score", "avatar", "permission" ->
                         value = value == null ? null : ((Number) value).intValue();

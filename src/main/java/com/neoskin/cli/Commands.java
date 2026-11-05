@@ -133,6 +133,15 @@ public final class Commands {
         NeoSkinSettings settings = context.getBean(NeoSkinSettings.class);
         AppPaths paths = context.getBean(AppPaths.class);
         context.getBean(SchemaInstaller.class).install();
+        // 与 PHP `UpdateCommand` 一致：结构迁移后再跑 4 个数据迁移
+        // （import_options / max_texture_width / communications 回填 / OAuth secret 哈希）。
+        // 最小测试上下文可能不注册 DataMigrator，此时跳过。
+        com.neoskin.migration.DataMigrator migrator =
+                context.getBeanProvider(com.neoskin.migration.DataMigrator.class)
+                        .getIfAvailable();
+        if (migrator != null) {
+            migrator.migrate();
+        }
 
         option.set("version", settings.getVersion());
         Path lock = paths.installLock();

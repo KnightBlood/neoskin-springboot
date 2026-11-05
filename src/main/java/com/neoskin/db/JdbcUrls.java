@@ -120,6 +120,9 @@ public final class JdbcUrls {
         // 与 config/database.php 一致：search_path=public, sslmode=prefer
         params.put("currentSchema", "public");
         params.put("sslmode", "prefer");
+        // 与 PDO 的隐式转换对齐：否则字符串参数写入 timestamp 列会报
+        // `column ... is of type timestamp ... expression is of type text`。
+        params.put("stringtype", "unspecified");
         params.put("ApplicationName", "blessing_skin");
         return "jdbc:postgresql://" + db.getHost() + ':' + port + '/' + db.getName()
                 + '?' + query(params);

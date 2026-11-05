@@ -61,7 +61,7 @@ class WebConfigTest {
                         config.communicationRenderer(), settings),
                     config.communicationRepository(ds, new SchemaInstaller(ds, settings), settings),
                     config.notificationRepository(ds, new SchemaInstaller(ds, settings), settings),
-                    config.communicationRenderer(), config.textureRepository(ds), paths);
+                    config.communicationRenderer(), config.textureRepository(ds, settings), paths);
 
             // 已移植的动作必须解析出 handler
             assertNotNull(resolver.resolve("App\\Http\\Controllers\\HomeController@index"));

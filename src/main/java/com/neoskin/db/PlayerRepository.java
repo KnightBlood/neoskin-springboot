@@ -328,7 +328,9 @@ public final class PlayerRepository {
         Map<String, Object> row = new java.util.LinkedHashMap<>();
         for (int i = 1; i <= meta.getColumnCount(); i++) {
             String column = meta.getColumnLabel(i);
-            Object value = rs.getObject(i);
+            Object value = DbValues.isDateColumn(column)
+                    ? DbValues.dateTime(rs, column)
+                    : rs.getObject(i);
             if ("pid".equals(column) || "uid".equals(column)
                     || "tid_skin".equals(column) || "tid_cape".equals(column)) {
                 value = value == null ? null : ((Number) value).intValue();

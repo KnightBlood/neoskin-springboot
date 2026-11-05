@@ -36,7 +36,7 @@
 | 数据库 | SQLite / MySQL / MariaDB / PostgreSQL / SQL Server |
 | OAuth2 | Spring Authorization Server |
 | 模板 | Thymeleaf |
-| 插件 | PF4J |
+| 插件 | PF4J（原生 Java 插件）+ PHP 清单层 | PHP 插件代码不可执行，需改写为 Java 插件（D-001） |
 | 构建 | Maven / Gradle |
 
 ## 4. 禁止事项
@@ -46,6 +46,9 @@
 3. 禁止改动 `.env` 运行时行为。
 4. 禁止引入 Servlet 容器（Tomcat / Jetty / Undertow）或 `spring-boot-starter-web`；Web 层只能使用 Vert.x。
 5. 禁止提交 `target/`、`build/`、`node_modules/`、`.env`。
+
+> 插件策略（D-001）：PHP 插件不可执行；保留 `package.json` 清单层，
+> 原生扩展使用 PF4J Java 插件。详见根目录 `../DECISIONS.md`。
 
 ## 5. 代码风格
 
@@ -98,7 +101,8 @@ agent 完成一个阶段后必须报告：
 1. 路由以 `routes.json` 为唯一权威，**不得增删改**路径、方法或参数名。
 2. 表结构以 `database/migrations/` 为准（`codegraph` 不含字段级 DDL），字段名/类型/默认值必须逐字对齐。
 3. 若发现 `codegraph` 与源码不一致，以源码为准，并在本文件记录偏差。
-4. 迁移过程中新增的任何映射关系，追加到本目录 `PORT-NOTES.md`，不回写源项目。
+4. 迁移过程中新增的任何映射关系，追加到根目录 `../PORT-NOTES.md`（跨项目），
+   本项目特有偏差写在本目录 `README.md` 的「已知限制」，不回写源项目。
 
 已知偏差：
 

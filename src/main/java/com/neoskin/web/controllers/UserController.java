@@ -593,9 +593,13 @@ public final class UserController {
     }
 
     private Map<String, Object> findTexture(int tid) throws SQLException {
+        // SQL Server 的 PUBLIC 是保留字；列名必须按方言引用。
+        String publicColumn = com.neoskin.db.SqlDialect
+                .of(settings.getDatabase().getConnection()).quote("public");
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(
-                     "SELECT tid, uid AS uploader, type, public FROM textures WHERE tid = ?")) {
+                     "SELECT tid, uid AS uploader, type, " + publicColumn
+                             + " FROM textures WHERE tid = ?")) {
             stmt.setInt(1, tid);
             try (var rs = stmt.executeQuery()) {
                 if (!rs.next()) {

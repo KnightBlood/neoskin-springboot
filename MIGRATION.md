@@ -70,7 +70,7 @@ NeoSkinSpringBoot/
 │   └── console/                # CLI 命令
 ├── src/main/resources/
 │   ├── application.yml
-│   ├── templates/              # Thymeleaf (104 个)
+│   ├── templates/              # Thymeleaf（86 个，覆盖 104 个 Twig）
 │   ├── static/                 # webpack 产物
 │   └── i18n/                   # 语言包
 ├── src/test/
@@ -275,7 +275,8 @@ Spring Security `@PreAuthorize("hasAuthority('SCOPE_Player.Read')")` 或自定�
 
 ### 9.1 Thymeleaf 转换
 
-104 个 Twig → Thymeleaf 模板。关键转换：
+104 个 Twig 契约 → **86 个 Thymeleaf 模板**（表单由 `OptionForm` 生成、
+`assets/*` 片段内联、错误页合并）。关键转换：
 - `{{ variable }}` → `th:text="${variable}"`
 - `{% if %}` → `th:if`
 - `{% for %}` → `th:each`
@@ -371,11 +372,11 @@ mock `fetch`。这些 mock 断言了 URL/方法/body/响应形状，等价于一
 - [x] SetupController, CheckInstallation
 
 ### Phase 6：前端（5-7 天）
-- [x] 104 个 Twig → Thymeleaf 转换
+- [x] 86 个 HTML 模板（覆盖源 104 个 Twig：表单由 `OptionForm` 生成、`assets/*` 片段内联、错误页合并）
 - [x] 静态资源服务
 
 ### Phase 7：插件系统（5-7 天）
-- [x] PF4J 集成
+- [x] PF4J 集成（原生 Java 插件；PHP 插件不可执行，D-001）
 - [x] 插件 manifest 解析
 - [x] 事件总线
 - [x] 插件管理
@@ -414,4 +415,4 @@ mvn clean verify
 - [x] bcrypt 密码验证通过
 - [x] OAuth2 端点与 Passport 响应一致
 - [x] Minecraft 客户端可正常获取皮肤/披风
-- [x] 1084 个测试用例全部通过（97 个测试类，见 PORT-NOTES）
+- [x] 1085 个测试用例全部通过（97 个测试类，见 README/AGENTS）

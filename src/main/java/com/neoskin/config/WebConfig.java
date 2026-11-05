@@ -154,8 +154,10 @@ public class WebConfig {
     }
 
     @Bean
-    public com.neoskin.db.TextureRepository textureRepository(DataSource dataSource) {
-        return new com.neoskin.db.TextureRepository(dataSource);
+    public com.neoskin.db.TextureRepository textureRepository(DataSource dataSource,
+            NeoSkinSettings settings) {
+        return new com.neoskin.db.TextureRepository(dataSource,
+                com.neoskin.db.SqlDialect.of(settings.getDatabase().getConnection()));
     }
 
     @Bean

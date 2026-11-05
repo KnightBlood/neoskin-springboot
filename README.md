@@ -4,6 +4,17 @@ Java / Spring Boot 4.1.x 实现的 Minecraft 皮肤托管平台，逐阶段迁�
 `blessing-skin-server-Laravel13`（6.0.11_patch）。HTTP 契约、数据库结构、
 `public/app` 前端产物保持与源项目一致。
 
+## 当前状态（2026-11-05）
+
+| 项 | 数值 |
+| --- | --- |
+| 路由接线 | **174 / 174**（145 条唯一路径；源码漏记的 `POST skinlib` 已补） |
+| 模板 | 86 个 HTML 模板（覆盖源 104 个 Twig：表单由 `OptionForm` 生成、`assets/*` 片段内联、错误页合并） |
+| 测试 | 97 个测试类 / 1085 个用例；`mvn clean verify` 全绿 |
+| 数据库矩阵 | sqlite / mysql / mariadb / pgsql 本机 + CI；sqlsrv 用 WiltonDB 本机 + CI 真 SQL Server |
+| 插件 | PHP 清单层（安装/启停/市场）+ PF4J 原生 Java 插件；PHP 插件代码不可执行（D-001） |
+| 更新 | ZIP 下载/上传/暂存/安装；`--neoskin.command=update` 执行结构迁移 + 4 个数据迁移 |
+
 ## 技术栈
 
 - Java 21
@@ -41,7 +52,7 @@ NeoSkinSpringBoot/
 ## 构建与测试
 
 ```sh
-mvn clean verify     # 全部测试（当前 1000+ 用例）
+mvn clean verify     # 全部测试（97 个测试类 / 1085 个用例）
 mvn package -DskipTests
 ```
 
@@ -100,14 +111,22 @@ java -jar app.jar --neoskin.command=up
 
 ## 已知限制
 
-- PHP 插件只能安装/启用/管理，**不能执行**（没有 PHP 运行时）。
+- PHP 插件只能安装/启用/管理，**不能执行**（没有 PHP 运行时）；原生扩展使用
+  PF4J Java 插件（D-001）。
 - 缓存支持 `file`（默认，与 PHP file store 同格式）/ `redis`（`CACHE_DRIVER=redis`，
   可用 `../tools/` 下的 Redis 或 Garnet 验证）/ `array`；会话同样支持
   `SESSION_DRIVER=file`（默认）/ `redis` / `array`；图片缓存仍是进程内。
 - 数据库矩阵：sqlite / mysql / mariadb / pgsql 本地 + CI 均可验证；
-  **sqlsrv 不做本地验证**（本机无 SQL Server），由 `../.github/workflows/ci.yml`
-  的 sqlsrv job（mcr.microsoft.com/mssql/server:2022 镜像）覆盖；矩阵引导
-  测试为 `com.neoskin.MatrixSpringBootTest`（按 `DB_CONNECTION` 环境变量启用）。
+  sqlsrv 本机可用 WiltonDB（SQL Server 协议）跑同一矩阵，真 SQL Server 由
+  `.github/workflows/ci.yml` 的 sqlsrv job（mcr.microsoft.com/mssql/server:2022
+  镜像）覆盖；矩阵引导测试为 `com.neoskin.MatrixSpringBootTest`（按
+  `DB_CONNECTION` 环境变量启用）。
+- 数据库名默认 `blessingskin`（与 PHP `.env.example` 一致）；本机共享脚本
+  `../tools/scripts/db.ps1` 创建的是 `blessing_skin`，跑矩阵时显式设置
+  `DB_DATABASE=blessing_skin`。
+- 版本升级的自动 `update` 尚未接线：`RedirectToSetup` 只记录“版本较旧”，
+  不会像 PHP 那样在请求期调用 `Artisan::call('update')`；升级后需显式执行
+  `--neoskin.command=update`。
 - SQL Server 连接开关：`DB_ENCRYPT` / `DB_TRUST_SERVER_CERTIFICATE`。
 - WebP 由 `webp-imageio` 编码；`?png` 可强制 PNG。
-- 其余偏差（Passport 令牌格式、渲染字节、更新流程等）见 `../PORT-NOTES.md`。
+- 其余偏差（Passport 令牌格式、渲染字节、更新流程等）见根目录 `PORT-NOTES.md`。

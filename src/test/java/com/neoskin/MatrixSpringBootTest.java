@@ -131,7 +131,7 @@ class MatrixSpringBootTest {
     }
 
     @Test
-    void bootsOnMatrixDatabase() {
+    void bootsOnMatrixDatabase() throws Exception {
         String expected = System.getenv("DB_CONNECTION");
         assertEquals(expected, dialect.name());
 
@@ -152,6 +152,30 @@ class MatrixSpringBootTest {
             uid = jdbc.queryForObject(
                     "SELECT uid FROM users WHERE email = ?", Integer.class,
                     "matrix@" + expected + ".local");
+
+            // 时间戳必须是 PHP 的 Y-m-d H:i:s，而不是驱动的 Timestamp/ISO 串。
+            com.neoskin.db.UserRepository users =
+                    new com.neoskin.db.UserRepository(dataSource);
+            java.util.Map<String, Object> row = users.findJsonById(uid);
+            assertNotNull(row);
+            assertTrue(String.valueOf(row.get("register_at"))
+                    .matches("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$"));
+
+            // 纹理 CRUD：覆盖自增主键、public 小整数、upload_at 时间戳与保留字引用。
+            com.neoskin.db.TextureRepository textures =
+                    new com.neoskin.db.TextureRepository(dataSource, dialect);
+            String hash = java.util.UUID.randomUUID().toString().replace("-", "")
+                    + java.util.UUID.randomUUID().toString().replace("-", "");
+            long tid = textures.insert("matrix", "steve", hash, 1, uid, true,
+                    "2026-01-02 03:04:05");
+            try {
+                com.neoskin.db.TextureRepository.Row texture = textures.findByTid(tid);
+                assertNotNull(texture);
+                assertEquals("2026-01-02 03:04:05", texture.uploadAt());
+                assertTrue(texture.isPublic());
+            } finally {
+                textures.deleteByTid(tid);
+            }
         } finally {
             jdbc.update("DELETE FROM users WHERE email = ?",
                     "matrix@" + expected + ".local");

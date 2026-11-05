@@ -20,8 +20,21 @@ public final class TextureRepository {
 
     private final javax.sql.DataSource dataSource;
 
+    /** 方言；仅用于给保留字列（`public`）加引用。测试用单参构造时可为 null。 */
+    private final SqlDialect dialect;
+
     public TextureRepository(javax.sql.DataSource dataSource) {
+        this(dataSource, null);
+    }
+
+    public TextureRepository(javax.sql.DataSource dataSource, SqlDialect dialect) {
         this.dataSource = dataSource;
+        this.dialect = dialect;
+    }
+
+    /** 引用标识符；无方言时保持原样（SQLite 测试路径）。 */
+    private String col(String name) {
+        return dialect == null ? name : dialect.quote(name);
     }
 
     /** {@code SkinlibController@handleUpload}：新增纹理行；返回自增 tid。 */
@@ -30,8 +43,8 @@ public final class TextureRepository {
             throws java.sql.SQLException {
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(
-                     "INSERT INTO textures (name, type, hash, size, uploader, public, "
-                             + "upload_at, likes) VALUES (?,?,?,?,?,?,?,1)",
+                     "INSERT INTO textures (name, type, hash, size, uploader, " + col("public")
+                             + ", upload_at, likes) VALUES (?,?,?,?,?,?,?,1)",
                      java.sql.Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, name);
             stmt.setString(2, type);
@@ -49,13 +62,14 @@ public final class TextureRepository {
 
     /** {@code Texture::where('hash',...)->where(public true OR uploader me)->first()}。 */
     public Row findPublicOrMine(String hash, int uid) throws java.sql.SQLException {
-        return find("SELECT * FROM textures WHERE hash = ? AND (public = 1 OR uploader = ?)",
+        return find("SELECT * FROM textures WHERE hash = ? AND (" + col("public")
+                        + " = 1 OR uploader = ?)",
                 hash == null ? null : hash, uid);
     }
 
     /** {@code Texture::where('hash',...)->where('public', true)->first()}。 */
     public Row findPublicByHash(String hash) throws java.sql.SQLException {
-        return find("SELECT * FROM textures WHERE hash = ? AND public = 1", hash);
+        return find("SELECT * FROM textures WHERE hash = ? AND " + col("public") + " = 1", hash);
     }
 
     /** 同 hash 的行数（delete 时判断文件是否仍被占用）。 */
@@ -131,7 +145,8 @@ public final class TextureRepository {
     /** {@code $texture->public = ...; save()}。 */
     public void updatePublic(long tid, boolean pub) throws java.sql.SQLException {
         try (var conn = dataSource.getConnection();
-             var stmt = conn.prepareStatement("UPDATE textures SET public = ? WHERE tid = ?")) {
+             var stmt = conn.prepareStatement(
+                     "UPDATE textures SET " + col("public") + " = ? WHERE tid = ?")) {
             stmt.setInt(1, pub ? 1 : 0);
             stmt.setLong(2, tid);
             stmt.executeUpdate();
@@ -172,7 +187,8 @@ public final class TextureRepository {
     private static Row mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {
         return new Row(rs.getLong("tid"), rs.getString("name"), rs.getString("type"),
                 rs.getString("hash"), rs.getLong("size"), rs.getInt("uploader"),
-                rs.getBoolean("public"), rs.getString("upload_at"), rs.getInt("likes"));
+                rs.getBoolean("public"), DbValues.dateTime(rs, "upload_at"),
+                rs.getInt("likes"));
     }
 
     public Row findByHash(String hash) throws java.sql.SQLException {
@@ -212,7 +228,8 @@ public final class TextureRepository {
             int limit, int offset) throws java.sql.SQLException {
         try (var conn = dataSource.getConnection()) {
             StringBuilder sql = new StringBuilder(
-                    "SELECT t.tid, t.name, t.type, t.uploader, t.public, t.likes, u.nickname "
+                    "SELECT t.tid, t.name, t.type, t.uploader, t." + col("public")
+                            + ", t.likes, u.nickname "
                             + "FROM textures t LEFT JOIN users u ON u.uid = t.uploader WHERE 1=1");
             java.util.List<Object> params = new java.util.ArrayList<>();
             appendFilters(sql, params, type, keyword, uploaderUid, viewerUid, admin);
@@ -254,7 +271,7 @@ public final class TextureRepository {
         }
     }
 
-    private static void appendFilters(StringBuilder sql, java.util.List<Object> params,
+    private void appendFilters(StringBuilder sql, java.util.List<Object> params,
             String type, String keyword, Integer uploaderUid, Integer viewerUid, boolean admin) {
         if ("skin".equals(type)) {
             sql.append(" AND t.type IN ('steve','alex')");
@@ -272,10 +289,10 @@ public final class TextureRepository {
         }
         if (!admin) {
             if (viewerUid != null) {
-                sql.append(" AND (t.public = 1 OR t.uploader = ?)");
+                sql.append(" AND (t.").append(col("public")).append(" = 1 OR t.uploader = ?)");
                 params.add(viewerUid);
             } else {
-                sql.append(" AND t.public = 1");
+                sql.append(" AND t.").append(col("public")).append(" = 1");
             }
         }
     }
