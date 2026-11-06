@@ -16,6 +16,7 @@ concurrency:
 env:
   JAVA_VERSION: "25"
   NODE_VERSION: "24"
+  MAVEN_OPTS: "-XX:+EnableDynamicAgentLoading"
   FRONTEND_URL: "https://github.com/DreamCraft-Tech/blessing-skin-server-patch/releases/download/v6.0.10_patch/blessing-skin-server_6.0.10_patch_php85.zip"
   FRONTEND_SHA256: "bb94f83718f3fca3737a04b2097e747720ebd5966979cf042dbbba5434da3e73"
 
@@ -45,6 +46,56 @@ jobs:
           path: frontend/public/app
           if-no-files-found: error
           retention-days: 7
+
+  platform-package:
+    name: Platform package (${{ matrix.os }} / ${{ matrix.arch }})
+    needs: frontend
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, arch: x64 }
+          - { os: ubuntu-24.04-arm, arch: arm64 }
+          - { os: windows-latest, arch: x64 }
+          - { os: windows-11-arm, arch: arm64 }
+          - { os: macos-15-intel, arch: x64 }
+          - { os: macos-latest, arch: arm64 }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-app
+          path: frontend/public/app
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - run: mvn -B -ntp -DskipTests package -Dfrontend.app.dir=frontend/public/app
+
+  platform-test:
+    name: Platform test (${{ matrix.os }})
+    needs: frontend
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04-arm, windows-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-app
+          path: frontend/public/app
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - run: mvn -B -ntp test -Dfrontend.app.dir=frontend/public/app
 
   verify:
     name: Verify (${{ matrix.database }})

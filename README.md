@@ -133,6 +133,16 @@ java -jar app.jar --neoskin.command=up
 - WebP 由 `webp-imageio` 编码；`?png` 可强制 PNG。
 - 其余偏差（Passport 令牌格式、渲染字节、更新流程等）见根目录 `PORT-NOTES.md`。
 
+## 支持平台
+
+| 平台 | 架构 | CI |
+| --- | --- | --- |
+| Linux | x86_64 / aarch64 | 构建 + 测试 |
+| Windows | x86_64 / arm64 | 构建 + 测试 |
+| macOS | x86_64 / arm64 | 构建 + 测试 |
+
+产物是可移植 JAR，只要求目标机有 JDK 21+；不需要原生扩展。
+
 ## 文档索引
 
 | 文档 | 内容 |
