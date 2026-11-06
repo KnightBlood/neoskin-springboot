@@ -74,11 +74,38 @@ public final class AssetManifest {
         String base = (cdnBase == null ? "" : cdnBase);
         // 源模板是 {{ cdn_base }}/app/...：cdn_base 为空时就成了 /app/...
         String root = base + "/app/";
-        urls.put("app", root + PROD_APP);
-        urls.put("style", root + PROD_STYLE);
-        urls.put("home", root + PROD_HOME);
-        urls.put("home_css", root + PROD_HOME_CSS);
-        urls.put("spectre", root + PROD_SPECTRE);
+        urls.put("app", root + pick("app.", ".js", PROD_APP));
+        urls.put("style", root + pick("style.", ".css", PROD_STYLE));
+        urls.put("home", root + pick("home.", ".js", PROD_HOME));
+        urls.put("home_css", root + pick("home-css.", ".css", PROD_HOME_CSS));
+        urls.put("spectre", root + pick("spectre.", ".css", PROD_SPECTRE));
         return urls;
+    }
+
+    /**
+     * 按实际打包/复制进 classpath 的 {@code static/app} 选择文件名。
+     *
+     * <p>CI 拉取的是 6.0.10 发布包，哈希与硬编码的 6.0.11 不同；直接写死会 404。
+     * 类路径是目录（测试 / exploded classes）时枚举目录；fat jar 内无法枚举，
+     * 回退到固定 6.0.11 哈希。</p>
+     */
+    private static String pick(String prefix, String suffix, String fallback) {
+        try {
+            java.net.URL url = AssetManifest.class.getResource("/static/app");
+            if (url == null || !"file".equals(url.getProtocol())) {
+                return fallback;
+            }
+            java.nio.file.Path dir = java.nio.file.Paths.get(url.toURI());
+            try (java.util.stream.Stream<java.nio.file.Path> files =
+                         java.nio.file.Files.list(dir)) {
+                return files.map(path -> path.getFileName().toString())
+                        .filter(name -> name.startsWith(prefix) && name.endsWith(suffix))
+                        .sorted(java.util.Comparator.reverseOrder())
+                        .findFirst()
+                        .orElse(fallback);
+            }
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 }

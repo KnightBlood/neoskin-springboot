@@ -34,6 +34,7 @@ import com.neoskin.web.i18n.TranslationFileLoader;
 import com.neoskin.web.i18n.Translator;
 import com.neoskin.web.middleware.EncryptCookies;
 import com.neoskin.web.middleware.MiddlewareChain;
+import com.neoskin.web.view.AssetManifest;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -135,11 +136,13 @@ class HomeControllerTest {
         assertTrue(body.contains("window.blessing"), "shared.head 注入了 blessing");
         assertTrue(body.contains("/lang/zh_CN.js?t="), "shared.foot 注入了 i18n 脚本");
         assertTrue(body.contains("blessing-skin-server"), "shared.copyright 的链接");
-        // 资源路径来自 AssetManifest（生产哈希），不是模板硬编码
-        assertTrue(body.contains("/app/app.7278b90.js"), "app.js");
-        assertTrue(body.contains("/app/style.1dd8a8a.css"), "style.css");
-        assertTrue(body.contains("/app/home.fe8cbb3.js"), "home.js");
-        assertTrue(body.contains("/app/home-css.6c76352.css"), "home-css.css");
+        // 资源路径来自 AssetManifest（按实际 static/app 解析哈希），不是模板硬编码
+        Map<String, String> assets = AssetManifest.urls(false, "");
+        assertTrue(body.contains(assets.get("app")), "app.js: " + assets.get("app"));
+        assertTrue(body.contains(assets.get("style")), "style.css: " + assets.get("style"));
+        assertTrue(body.contains(assets.get("home")), "home.js: " + assets.get("home"));
+        assertTrue(body.contains(assets.get("home_css")),
+                "home-css.css: " + assets.get("home_css"));
     }
 
     @Test

@@ -21,17 +21,23 @@ class AssetManifestTest {
     void productionUsesHashedFilenames() {
         Map<String, String> urls = AssetManifest.urls(false, "");
 
-        assertEquals("/app/app.7278b90.js", urls.get("app"));
-        assertEquals("/app/style.1dd8a8a.css", urls.get("style"));
-        assertEquals("/app/home.fe8cbb3.js", urls.get("home"));
-        assertEquals("/app/home-css.6c76352.css", urls.get("home_css"));
-        assertEquals("/app/spectre.e885dd0.css", urls.get("spectre"));
+        // CI 使用 6.0.10 发布包时哈希不同；只断言「带哈希的产物路径」。
+        assertTrue(urls.get("app").matches("/app/app\\.[^.]+\\.[a-z]+"), urls.get("app"));
+        assertEquals(true, urls.get("app").endsWith(".js"), urls.get("app"));
+        assertTrue(urls.get("style").matches("/app/style\\.[^.]+\\.css"), urls.get("style"));
+        assertTrue(urls.get("home").matches("/app/home\\.[^.]+\\.js"), urls.get("home"));
+        assertTrue(urls.get("home_css").matches("/app/home-css\\.[^.]+\\.css"),
+                urls.get("home_css"));
+        assertTrue(urls.get("spectre").matches("/app/spectre\\.[^.]+\\.css"),
+                urls.get("spectre"));
     }
 
     @Test
     void productionPrefixesCdnBase() {
         Map<String, String> urls = AssetManifest.urls(false, "https://cdn.example.com");
-        assertEquals("https://cdn.example.com/app/app.7278b90.js", urls.get("app"));
+        assertTrue(urls.get("app").startsWith("https://cdn.example.com/app/app."),
+                urls.get("app"));
+        assertTrue(urls.get("app").endsWith(".js"), urls.get("app"));
     }
 
     @Test

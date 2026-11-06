@@ -62,10 +62,15 @@ class StaticAssetsClasspathTest {
     }
 
     private HttpResponse<String> get(int port, String path) throws Exception {
-        return HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
-                        .GET().build(),
-                HttpResponse.BodyHandlers.ofString());
+        // 强制 HTTP/1.1：JDK HttpClient 默认尝试 h2c upgrade，大文件（CI 前端产物）
+        // 会触发 Vert.x 的 MAX_FRAME_SIZE 限制。
+        return HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build()
+                .send(
+                        HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
+                                .GET().build(),
+                        HttpResponse.BodyHandlers.ofString());
     }
 
     private int listen(Router router) throws Exception {
