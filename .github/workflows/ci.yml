@@ -1,58 +1,45 @@
-name: CI — DB matrix
-# 对 AGENTS.md 验证清单的持久化：5 种数据库各自的 mvn clean verify。
-# SQL Server 本机无法免安装运行（需要装服务），统一放在这里用官方镜像验证。
+name: CI
 
-# 诊断失败时可把 surefire 摘要 + 关键日志临时写到某个分支再用 raw.githubusercontent.com
-# 读取（Actions 日志需要仓库权限）；平时不需要额外权限。
 on:
   push:
     branches: [ main, master ]
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "25"
+  NODE_VERSION: "24"
+  FRONTEND_URL: "https://github.com/DreamCraft-Tech/blessing-skin-server-patch/releases/download/v6.0.10_patch/blessing-skin-server_6.0.10_patch_php85.zip"
+  FRONTEND_SHA256: "bb94f83718f3fca3737a04b2097e747720ebd5966979cf042dbbba5434da3e73"
+
 jobs:
-  # 前端预编译产物（public/app）不提交到本仓库。源仓库 KnightBlood/blessing-skin-server-Laravel13
-  # 的发布包里有 public/app，但发布包可能落后于 main；这里按它 CI 的做法（build-php85.py）
-  # 直接 `yarn install --frozen-lockfile && yarn build` 构建一次，供 5 个 DB 矩阵共用。
   frontend:
-    name: Build frontend (public/app)
+    name: Frontend assets (public/app)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: KnightBlood/blessing-skin-server-Laravel13
-          path: frontend
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install and build
-        working-directory: frontend
+      - name: Fetch legacy frontend assets
         run: |
-          npm install --global yarn@1.22.22
-          yarn install --frozen-lockfile --non-interactive
-          yarn build
-
-      # 与源仓库 tools/build-php85.py 一致：webpack 之外还有 3 个静态文件要放进 public/app
-      - name: Copy non-webpack assets
-        run: |
-          cp frontend/resources/assets/src/images/bg.webp        frontend/public/app/
-          cp frontend/resources/assets/src/images/favicon.ico    frontend/public/app/
-          cp frontend/resources/assets/standalone/*.js           frontend/public/app/
-
-      - name: Check artifacts
-        run: |
-          test -f frontend/public/app/app.twig \
-            || { echo "public/app/app.twig missing after yarn build"; exit 1; }
-          test -f frontend/public/app/style.twig \
-            || { echo "public/app/style.twig missing after yarn build"; exit 1; }
-          test -f frontend/public/app/favicon.ico \
-            || { echo "public/app/favicon.ico missing"; exit 1; }
+          set -euo pipefail
+          curl -sSLo /tmp/bs.zip "$FRONTEND_URL"
+          echo "$FRONTEND_SHA256  /tmp/bs.zip" | sha256sum -c -
+          unzip -q /tmp/bs.zip -d /tmp/bs
+          mkdir -p frontend/public
+          rm -rf frontend/public/app
+          cp -r /tmp/bs/public/app frontend/public/app
+          test -f frontend/public/app/app.twig
           echo "frontend files: $(find frontend/public/app -type f | wc -l)"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: frontend-app
           path: frontend/public/app
@@ -60,6 +47,7 @@ jobs:
           retention-days: 7
 
   verify:
+    name: Verify (${{ matrix.database }})
     needs: frontend
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -69,17 +57,15 @@ jobs:
         database: [ sqlite, mysql, mariadb, pgsql, sqlsrv ]
 
     env:
-      # SQLite: 矩阵值已是合法的 DB_CONNECTION；mvn 里项目默认是 mysql，显式固定。
       DB_CONNECTION: ${{ matrix.database }}
       DB_HOST: 127.0.0.1
       DB_DATABASE: blessingskin
       MAVEN_ARGS: -B -ntp
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      # 前端产物由上面的 frontend job 构建并上传，这里只下载。
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: frontend-app
           path: frontend/public/app
@@ -91,17 +77,11 @@ jobs:
           echo "frontend files: $(find "$GITHUB_WORKSPACE/frontend/public/app" -type f | wc -l)"
         shell: bash
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '21'
-
-      - name: Cache Maven repository
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: m2-${{ hashFiles('pom.xml') }}
-          restore-keys: m2-
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
 
       # ------------------------------------------------ MySql / MariaDB ----
       - name: Start MySQL
@@ -111,7 +91,7 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=123456 \
             -e MYSQL_DATABASE=blessingskin \
             -e MYSQL_USER=blessing -e MYSQL_PASSWORD=123456 \
-            -p 3306:3306 mysql:8 \
+            -p 3306:3306 mysql:8.4 \
             --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
           for i in $(seq 1 60); do
             docker exec neoskin-db mysqladmin --protocol=tcp -h 127.0.0.1 \
@@ -127,7 +107,7 @@ jobs:
             -e MARIADB_ROOT_PASSWORD=123456 \
             -e MARIADB_DATABASE=blessingskin \
             -e MARIADB_USER=blessing -e MARIADB_PASSWORD=123456 \
-            -p 3306:3306 mariadb:11 \
+            -p 3306:3306 mariadb:11.8 \
             --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
           for i in $(seq 1 60); do
             docker exec neoskin-db mariadb-admin --protocol=tcp -h 127.0.0.1 \
@@ -143,7 +123,7 @@ jobs:
           docker run -d --name neoskin-db \
             -e POSTGRES_PASSWORD=123456 \
             -e POSTGRES_DB=blessingskin \
-            -p 5432:5432 postgres:16
+            -p 5432:5432 postgres:18
           for i in $(seq 1 60); do
             docker exec neoskin-db pg_isready -U postgres && break
             sleep 2
@@ -151,8 +131,6 @@ jobs:
         shell: bash
 
       # ----------------------------------------------------- SQL Server ----
-      # SA 密码必须满足复杂度（镜像在启动时强制），统一 123456 的密码留给
-      # 下面 sqlcmd 建出来的业务登录 blessing —— 应用侧凭据依然全矩阵一致。
       - name: Start SQL Server
         if: matrix.database == 'sqlsrv'
         env:
@@ -163,7 +141,7 @@ jobs:
             -e ACCEPT_EULA=Y \
             -e MSSQL_SA_PASSWORD="$SA_BOOTSTRAP_PASSWORD" \
             -e MSSQL_PID=Developer \
-            -p 1433:1433 mcr.microsoft.com/mssql/server:2022-latest
+            -p 1433:1433 mcr.microsoft.com/mssql/server:2025-latest
           for i in $(seq 1 90); do
             docker exec neoskin-db /opt/mssql-tools18/bin/sqlcmd \
               -C -S localhost -U sa -P "$SA_BOOTSTRAP_PASSWORD" \
@@ -218,18 +196,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: tests/browser/package-lock.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: frontend-app
           path: frontend/public/app
@@ -239,7 +220,7 @@ jobs:
 
       - name: Setup Chrome
         id: chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         with:
           chrome-version: stable
 
