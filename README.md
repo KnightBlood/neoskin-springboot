@@ -1,16 +1,18 @@
 # NeoSkinSpringBoot
 
+> 最后更新：2026-11-06
+
 Java / Spring Boot 4.1.x 实现的 Minecraft 皮肤托管平台，逐阶段迁移自
 `blessing-skin-server-Laravel13`（6.0.11_patch）。HTTP 契约、数据库结构、
 `public/app` 前端产物保持与源项目一致。
 
-## 当前状态（2026-11-05）
+## 当前状态（2026-11-06）
 
 | 项 | 数值 |
 | --- | --- |
 | 路由接线 | **174 / 174**（145 条唯一路径；源码漏记的 `POST skinlib` 已补） |
 | 模板 | 86 个 HTML 模板（覆盖源 104 个 Twig：表单由 `OptionForm` 生成、`assets/*` 片段内联、错误页合并） |
-| 测试 | 97 个测试类 / 1085 个用例；`mvn clean verify` 全绿 |
+| 测试 | 97 个测试类 / **1086 个用例，0 fail / 2 skip**（`mvn test`，2026-11-06） |
 | 数据库矩阵 | sqlite / mysql / mariadb / pgsql 本机 + CI；sqlsrv 用 WiltonDB 本机 + CI 真 SQL Server |
 | 插件 | PHP 清单层（安装/启停/市场）+ PF4J 原生 Java 插件；PHP 插件代码不可执行（D-001） |
 | 更新 | ZIP 下载/上传/暂存/安装；`--neoskin.command=update` 执行结构迁移 + 4 个数据迁移 |
@@ -130,3 +132,16 @@ java -jar app.jar --neoskin.command=up
 - SQL Server 连接开关：`DB_ENCRYPT` / `DB_TRUST_SERVER_CERTIFICATE`。
 - WebP 由 `webp-imageio` 编码；`?png` 可强制 PNG。
 - 其余偏差（Passport 令牌格式、渲染字节、更新流程等）见根目录 `PORT-NOTES.md`。
+
+## 文档索引
+
+| 文档 | 内容 |
+| --- | --- |
+| [README.md](README.md) | 项目入口、快速开始 |
+| [AGENTS.md](AGENTS.md) | agent 行为约束 |
+| [PROGRESS.md](PROGRESS.md) | 进度快照与变更记录 |
+| [ACCEPTANCE.md](ACCEPTANCE.md) | 验收清单 |
+| [MIGRATION.md](MIGRATION.md) | 迁移计划与阶段 |
+| [PORT-NOTES.md](PORT-NOTES.md) | 偏差、决策与踩坑 |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | 构建、配置、部署与升级 |
+| [DB-MATRIX.md](DB-MATRIX.md) | 数据库矩阵 |

@@ -1,5 +1,7 @@
 # NeoSkinSpringBoot — Java / Spring Boot 4.1.x 迁移计划
 
+> 最后更新：2026-11-06
+
 > **目标**：把 `blessing-skin-server-Laravel13`（6.0.11_patch）完整迁移到 Java 21 + Spring Boot 4.1.x，保持 **HTTP 接口字节级兼容** 与 **数据库结构/数据完全兼容**。
 
 ---
