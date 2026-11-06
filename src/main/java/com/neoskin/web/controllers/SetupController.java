@@ -52,6 +52,7 @@ public final class SetupController {
     private final AppPaths paths;
     private final DataSource dataSource;
     private final SchemaInstaller schema;
+    private final com.neoskin.migration.DataMigrator migrator;
     private final String timezone;
 
     public SetupController(Option option, Translator translator, UserRepository users,
@@ -66,6 +67,8 @@ public final class SetupController {
         this.paths = paths;
         this.dataSource = dataSource;
         this.schema = new SchemaInstaller(dataSource, settings);
+        this.migrator = new com.neoskin.migration.DataMigrator(dataSource, schema, option,
+                settings);
         this.timezone = timezone;
     }
 
@@ -217,6 +220,10 @@ public final class SetupController {
 
                 // Todo: 源里的 passport:keys（本工程尚未移植 Passport）
                 schema.install();
+                // 源：$artisan->call('migrate', ['--force' => true])
+                // 其中包含 4 条数据迁移（import_options 会写入 version 与插值后的
+                // announcement/copyright_text）。
+                migrator.migrate();
 
                 String siteUrl = "http://" + hostOf(ctx) + "/";
                 if (siteUrl.endsWith("/index.php")) {

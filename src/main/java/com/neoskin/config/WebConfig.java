@@ -463,6 +463,25 @@ public class WebConfig {
             AppPaths paths, Option option, Translator translator,
             com.neoskin.db.UserRepository userRepository,
             com.neoskin.service.cache.CacheStore cacheStore) {
+        return middlewareRegistry(settings, paths, option, translator, userRepository,
+                cacheStore, null);
+    }
+
+    /**
+     * 同上，并接线请求期自动升级（{@code RedirectToSetup} → {@code UpdateRunner}）。
+     *
+     * <p>之所以在注册表建好后再覆盖 {@code RedirectToSetup} 条目：中间件链是静态
+     * 装配的，而 {@code UpdateRunner} 是 Spring Bean；覆盖可以避免让
+     * {@code MiddlewareChain} 依赖 Spring 上下文，也不会影响单元测试里的
+     * 三参构造（无自动升级）。</p>
+     *
+     * @param updateTask 执行 {@code update}；{@code null} 时保持「只记录版本较旧」
+     */
+    public static Map<String, Handler<RoutingContext>> middlewareRegistry(NeoSkinSettings settings,
+            AppPaths paths, Option option, Translator translator,
+            com.neoskin.db.UserRepository userRepository,
+            com.neoskin.service.cache.CacheStore cacheStore,
+            java.util.function.BooleanSupplier updateTask) {
         Map<String, Handler<RoutingContext>> registry = new HashMap<>();
         String key = settings.getKey();
 
@@ -503,6 +522,13 @@ public class WebConfig {
             log.warn("APP_KEY 未配置：会话与 cookie 加密已禁用（安装向导阶段属正常）");
             MiddlewareChain.connectValueLayer(registry, null, (java.nio.file.Path) null,
                     paths, settings.getVersion(), option, translator);
+        }
+
+        // 请求期自动升级（源 RedirectToSetup 里的 Artisan::call('update')）。
+        if (paths != null && updateTask != null) {
+            registry.put("App\\Http\\Middleware\\RedirectToSetup",
+                    new com.neoskin.web.middleware.RedirectToSetup(paths,
+                            settings.getVersion(), option, updateTask));
         }
 
         return registry;
@@ -596,9 +622,14 @@ public class WebConfig {
     public VertxHttpServer vertxHttpServer(Routes routes, HandlerResolver resolver,
             NeoSkinSettings settings, AppPaths paths, Option option, Translator translator,
             com.neoskin.db.UserRepository userRepository,
-            com.neoskin.service.cache.CacheStore cacheStore) {
+            com.neoskin.service.cache.CacheStore cacheStore,
+            com.neoskin.service.UpdateRunner updateRunner) {
         Map<String, Handler<RoutingContext>> registry = middlewareRegistry(settings, paths,
-                option, translator, userRepository, cacheStore);
+                option, translator, userRepository, cacheStore,
+                () -> {
+                    updateRunner.update();
+                    return true;
+                });
 
         // 全局栈最后一个：DetectLanguagePrefer（写 ThreadLocal + 排 locale cookie）。
         java.util.List<Handler<RoutingContext>> global =

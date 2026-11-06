@@ -124,9 +124,9 @@ java -jar app.jar --neoskin.command=up
 - 数据库名默认 `blessingskin`（与 PHP `.env.example` 一致）；本机共享脚本
   `../tools/scripts/db.ps1` 创建的是 `blessing_skin`，跑矩阵时显式设置
   `DB_DATABASE=blessing_skin`。
-- 版本升级的自动 `update` 尚未接线：`RedirectToSetup` 只记录“版本较旧”，
-  不会像 PHP 那样在请求期调用 `Artisan::call('update')`；升级后需显式执行
-  `--neoskin.command=update`。
+- 版本升级已按 PHP 接线：`RedirectToSetup` 在 `options.version` 落后时于请求期调用
+  `UpdateRunner`（5.0.0 背景图迁移 + 迁移 + 版本号 + `install.lock` + 清缓存），
+  并发请求串行化、失败退避 30 秒；也可继续显式执行 `--neoskin.command=update`。
 - SQL Server 连接开关：`DB_ENCRYPT` / `DB_TRUST_SERVER_CERTIFICATE`。
 - WebP 由 `webp-imageio` 编码；`?png` 可强制 PNG。
 - 其余偏差（Passport 令牌格式、渲染字节、更新流程等）见根目录 `PORT-NOTES.md`。

@@ -63,7 +63,7 @@ public final class Commands {
     public static int run(ConfigurableApplicationContext context, String command, String[] args) {
         try {
             return switch (command) {
-                case "install" -> install(context, args);
+                case "install", "bs:install" -> install(context, args);
                 case "update" -> update(context);
                 case "options:cache" -> optionsCache(context);
                 case "plugin:enable" -> plugin(context, args, true);
@@ -94,9 +94,9 @@ public final class Commands {
             return 0;
         }
 
-        String email = required(args, "--email");
-        String password = required(args, "--password");
-        String nickname = required(args, "--nickname");
+        String email = required(args, "--email", 0);
+        String password = required(args, "--password", 1);
+        String nickname = required(args, "--nickname", 2);
 
         NeoSkinSettings settings = context.getBean(NeoSkinSettings.class);
         AppPaths paths = context.getBean(AppPaths.class);
@@ -105,6 +105,16 @@ public final class Commands {
         Cipher cipher = context.getBean(Cipher.class);
 
         schema.install();
+
+        // 源 bs:install 调用 migrate --force，其中包含 4 条数据迁移
+        // （import_options / max_texture_width / communications / oauth secret）。
+        // 最小测试上下文可能不注册 DataMigrator，此时跳过（与 update 同口径）。
+        com.neoskin.migration.DataMigrator migrator =
+                context.getBeanProvider(com.neoskin.migration.DataMigrator.class)
+                        .getIfAvailable();
+        if (migrator != null) {
+            migrator.migrate();
+        }
 
         String key = ensureAppKey(settings, paths);
         new OAuthKeys(paths).ensureGenerated();
@@ -127,27 +137,30 @@ public final class Commands {
         return 0;
     }
 
-    /** {@code update}：建表 / 补表 + 版本号 + install.lock + 清缓存。 */
+    /** {@code update}：建表 / 补表 + 数据迁移 + 版本号 + install.lock + 清缓存。 */
     private static int update(ConfigurableApplicationContext context) throws Exception {
         Option option = context.getBean(Option.class);
         NeoSkinSettings settings = context.getBean(NeoSkinSettings.class);
         AppPaths paths = context.getBean(AppPaths.class);
-        context.getBean(SchemaInstaller.class).install();
-        // 与 PHP `UpdateCommand` 一致：结构迁移后再跑 4 个数据迁移
-        // （import_options / max_texture_width / communications 回填 / OAuth secret 哈希）。
-        // 最小测试上下文可能不注册 DataMigrator，此时跳过。
-        com.neoskin.migration.DataMigrator migrator =
-                context.getBeanProvider(com.neoskin.migration.DataMigrator.class)
-                        .getIfAvailable();
-        if (migrator != null) {
-            migrator.migrate();
-        }
 
-        option.set("version", settings.getVersion());
-        Path lock = paths.installLock();
-        Files.createDirectories(lock.getParent());
-        Files.write(lock, new byte[0]);
-        option.clearCache();
+        // 与请求期自动升级共用同一实现（App\Console\Commands\UpdateCommand）。
+        com.neoskin.service.UpdateRunner runner =
+                context.getBeanProvider(com.neoskin.service.UpdateRunner.class)
+                        .getIfAvailable();
+        if (runner == null) {
+            SchemaInstaller schema = context.getBean(SchemaInstaller.class);
+            com.neoskin.migration.DataMigrator migrator =
+                    context.getBeanProvider(com.neoskin.migration.DataMigrator.class)
+                            .getIfAvailable();
+            com.neoskin.service.cache.CacheStore cacheStore =
+                    context.getBeanProvider(com.neoskin.service.cache.CacheStore.class)
+                            .getIfAvailable();
+            runner = new com.neoskin.service.UpdateRunner(option, settings, paths, schema,
+                    java.util.Optional.ofNullable(migrator),
+                    java.util.Optional.ofNullable(cacheStore));
+        }
+        runner.update();
+
         System.out.println(trans(context, "setup.updates.success.title", Map.of()));
         return 0;
     }
@@ -162,7 +175,7 @@ public final class Commands {
     /** {@code plugin:enable|disable}。 */
     private static int plugin(ConfigurableApplicationContext context, String[] args,
             boolean enable) {
-        String name = required(args, "--name");
+        String name = required(args, "--name", 0);
         Option option = context.getBean(Option.class);
         Translator translator = context.getBean(Translator.class);
         NeoSkinSettings settings = context.getBean(NeoSkinSettings.class);
@@ -326,6 +339,44 @@ public final class Commands {
         }
 
         return value;
+    }
+
+    /**
+     * 取值：优先 {@code --name=value}，否则回退到第 {@code position} 个位置参数。
+     *
+     * <p>PHP 的 {@code bs:install {email} {password} {nickname}}、
+     * {@code plugin:enable {name}} 使用位置参数；本工程的 CLI 沿用
+     * {@code --name=value} 风格，同时接受位置参数以免和 PHP 用法不兼容。</p>
+     */
+    private static String required(String[] args, String name, int position) {
+        String value = argValue(args, name);
+        if (value == null || value.isBlank()) {
+            value = positional(args, position);
+        }
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("missing required option " + name);
+        }
+
+        return value;
+    }
+
+    /** 第 {@code index} 个非选项参数（{@code --foo=bar} / {@code --foo} 都跳过）。 */
+    private static String positional(String[] args, int index) {
+        if (args == null) {
+            return null;
+        }
+        int seen = 0;
+        for (String arg : args) {
+            if (arg == null || arg.startsWith("-")) {
+                continue;
+            }
+            if (seen == index) {
+                return arg;
+            }
+            seen++;
+        }
+
+        return null;
     }
 
     private static String argValue(String[] args, String name) {
