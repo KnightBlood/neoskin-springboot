@@ -55,9 +55,16 @@ public final class TextureController {
     private static final boolean WEBP_WRITER_AVAILABLE;
 
     static {
-        Iterator<javax.imageio.ImageWriter> writers =
-                ImageIO.getImageWritersByFormatName("webp");
-        WEBP_WRITER_AVAILABLE = writers.hasNext();
+        boolean available = false;
+        try {
+            Iterator<javax.imageio.ImageWriter> writers =
+                    ImageIO.getImageWritersByFormatName("webp");
+            available = writers.hasNext();
+        } catch (Throwable ignored) {
+            // macOS arm64 等平台没有 webp-imageio 原生库时，类初始化不能失败；
+            // 回退 PNG 即可（与 PHP 没有 IMG_WEBP 时一致）。
+        }
+        WEBP_WRITER_AVAILABLE = available;
     }
 
     private final Option option;
