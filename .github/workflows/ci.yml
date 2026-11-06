@@ -16,7 +16,7 @@ concurrency:
 env:
   JAVA_VERSION: "25"
   NODE_VERSION: "24"
-  MAVEN_OPTS: "-XX:+EnableDynamicAgentLoading"
+  MAVEN_OPTS: "-XX:+EnableDynamicAgentLoading -Djava.awt.headless=true"
   FRONTEND_URL: "https://github.com/DreamCraft-Tech/blessing-skin-server-patch/releases/download/v6.0.10_patch/blessing-skin-server_6.0.10_patch_php85.zip"
   FRONTEND_SHA256: "bb94f83718f3fca3737a04b2097e747720ebd5966979cf042dbbba5434da3e73"
 
@@ -68,12 +68,16 @@ jobs:
         with:
           name: frontend-app
           path: frontend/public/app
-      - uses: actions/setup-java@v6
+      - if: matrix.os != 'windows-11-arm'
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
-      - run: mvn -B -ntp -DskipTests package -Dfrontend.app.dir=frontend/public/app
+      - if: matrix.os == 'windows-11-arm'
+        shell: pwsh
+        run: echo "JAVA_HOME=$env:JAVA_HOME_21_AARCH64" >> $env:GITHUB_ENV
+      - run: mvn -B -ntp -DskipTests package "-Dfrontend.app.dir=frontend/public/app"
 
   platform-test:
     name: Platform test (${{ matrix.os }})
@@ -90,12 +94,16 @@ jobs:
         with:
           name: frontend-app
           path: frontend/public/app
-      - uses: actions/setup-java@v6
+      - if: matrix.os != 'windows-11-arm'
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
-      - run: mvn -B -ntp test -Dfrontend.app.dir=frontend/public/app
+      - if: matrix.os == 'windows-11-arm'
+        shell: pwsh
+        run: echo "JAVA_HOME=$env:JAVA_HOME_21_AARCH64" >> $env:GITHUB_ENV
+      - run: mvn -B -ntp test "-Dfrontend.app.dir=frontend/public/app"
 
   verify:
     name: Verify (${{ matrix.database }})
