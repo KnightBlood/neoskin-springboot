@@ -38,3 +38,6 @@ Thumbs.db
 
 # DynamoDB Local runtime metadata
 dynamodb-local-metadata.json
+
+# Browser E2E deps
+tests/browser/node_modules/

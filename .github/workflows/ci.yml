@@ -211,3 +211,40 @@ jobs:
           mvn clean verify -Dfrontend.app.dir="$GITHUB_WORKSPACE/frontend/public/app" \
             2>&1 | tee "/tmp/mvn-${{ matrix.database }}.log"
         shell: bash
+
+  browser-e2e:
+    name: Browser E2E (Playwright)
+    needs: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-app
+          path: frontend/public/app
+
+      - name: Install browser test deps
+        run: npm ci --prefix tests/browser
+
+      - name: Locate Chrome
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "NEOSKIN_CHROME_PATH=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          fi
+
+      - name: Browser E2E
+        env:
+          NEOSKIN_BROWSER_E2E: "1"
+          DB_CONNECTION: sqlite
+        run: mvn -B -ntp -Dtest=BrowserE2ETest -Dfrontend.app.dir="$GITHUB_WORKSPACE/frontend/public/app" test

@@ -1,0 +1,12 @@
+{
+  "name": "neoskin-spring-browser-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser E2E for NeoSkinSpringBoot legacy pages (Playwright + system Chrome)",
+  "scripts": {
+    "test": "node flows.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.0"
+  }
+}
