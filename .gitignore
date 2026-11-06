@@ -9,7 +9,9 @@
 
 # Runtime data / generated files (repository root only)
 /storage/
-/public/
+/public/*
+!/public/app-next/
+!/public/app-next/**
 *.sqlite
 *.sqlite-journal
 *.db

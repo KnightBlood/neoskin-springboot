@@ -59,3 +59,14 @@
 1. 真 SQL Server CI 常态化（已有 job，观察稳定性）。
 2. 多实例部署时补 Redis 共享会话/缓存示例。
 3. 前端视觉回归（截图基线）与移动端走查。
+
+---
+
+## 8. 共享前端 P1（2026-11-06）
+
+- 新增 `GET /api/bootstrap`（契约 v1）与 SPA 壳 `GET /app-next/{site,admin}`、`/app-next/{site,admin}/*`。
+- `VertxRouteRegistry` 在 PHP 路由前注册 SPA 路由，并复用 web 组中间件（`EncryptCookies` + `StartSession`）；静态 handler 对 `/app-next/` 主动放行，避免直接返回未注入的 `index.html`。
+- 壳注入 `<meta name="csrf-token">`、`<meta name="neoskin-mode">` 与 `#neoskin-bootstrap`；静态资源一年 immutable 缓存；缺失扩展名文件 404。
+- 实现：`com.neoskin.web.SpaFrontend`、`VertxRouteRegistry`、`VertxHttpServer`、`WebConfig`。
+- `.gitignore` 放开 `public/app-next`；构建产物已发布（含 `manifest.json`）。
+- 联调验证：登录 → `/app-next/site/user` → `/app-next/admin/` 仪表盘，0 console error。

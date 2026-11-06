@@ -643,6 +643,8 @@ public class WebConfig {
         VertxHttpServer server = new VertxHttpServer(
                 routes, resolver, settings.getHttp().getPort())
                 .withStaticRoot(paths.publicDir())
+                .withSpa(new com.neoskin.web.SpaFrontend(option, userRepository,
+                        paths.publicDir(), settings.getVersion()))
                 .withMiddleware(registry)
                 .withGlobalMiddleware(global)
                 .withFailureHandler(failure);

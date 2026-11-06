@@ -41,6 +41,9 @@ public final class VertxHttpServer {
     /** 异常出口（{@code ErrorHandler}）；{@code null} 时退到纯 JSON。 */
     private Handler<RoutingContext> failureHandler;
 
+    /** SPA 壳与 /api/bootstrap；{@code null} 时不挂。 */
+    private Handler<RoutingContext> spaHandler;
+
     private Vertx vertx;
 
     public VertxHttpServer(Routes routes, HandlerResolver resolver, int port) {
@@ -77,6 +80,12 @@ public final class VertxHttpServer {
         return this;
     }
 
+    /** 指定 SPA 壳与 /api/bootstrap 的 handler。 */
+    public VertxHttpServer withSpa(Handler<RoutingContext> handler) {
+        this.spaHandler = handler;
+        return this;
+    }
+
     /**
      * 启动监听；返回的 future 在端口就绪时完成（装驱动用的联动入口）。
      */
@@ -84,7 +93,7 @@ public final class VertxHttpServer {
         vertx = Vertx.vertx();
         VertxRouteRegistry.BuildResult built = VertxRouteRegistry.build(
                 routes, resolver, vertx, globalMiddleware, middlewareRegistry, staticRoot,
-                failureHandler);
+                failureHandler, spaHandler);
         Router router = built.router();
 
         CompletableFuture<Void> ready = new CompletableFuture<>();

@@ -110,17 +110,32 @@ public final class VertxRouteRegistry {
             Map<String, Handler<RoutingContext>> middlewareRegistry,
             java.nio.file.Path staticRoot,
             Handler<RoutingContext> failureHandler) {
+        return build(routes, resolver, vertx, globalMiddleware, middlewareRegistry, staticRoot,
+                failureHandler, null);
+    }
+
+    /** 完整装配（含 SPA 壳与 /api/bootstrap）。 */
+    public static BuildResult build(Routes routes, HandlerResolver resolver, Vertx vertx,
+            List<Handler<RoutingContext>> globalMiddleware,
+            Map<String, Handler<RoutingContext>> middlewareRegistry,
+            java.nio.file.Path staticRoot,
+            Handler<RoutingContext> failureHandler,
+            Handler<RoutingContext> spaHandler) {
         Router router = Router.router(vertx);
         int registered = 0;
 
         // 静态资源先行：/app/*、/lang/*、favicon 等；未命中自动 fallthrough。
-        if (staticRoot != null && StaticAssets.available(staticRoot)) {
-            router.route().handler(StaticAssets.handler(staticRoot));
-        } else {
-            // 磁盘没有 public/app 时用 jar 内置的 static/app（mvn package 自动打包）；
-            // /lang/*.js 仍从磁盘 public/lang 读（由 JavaScript 服务生成）
-            router.route().handler(StaticAssets.classpathHandler(staticRoot));
-        }
+        // /app-next/* 必须交给 SPA handler（壳需要注入 bootstrap），不能被静态 handler 抢走。
+        Handler<RoutingContext> staticHandler = staticRoot != null && StaticAssets.available(staticRoot)
+                ? StaticAssets.handler(staticRoot)
+                : StaticAssets.classpathHandler(staticRoot);
+        router.route().handler(ctx -> {
+            if (ctx.normalizedPath().startsWith("/app-next/")) {
+                ctx.next();
+                return;
+            }
+            staticHandler.handle(ctx);
+        });
 
         for (Handler<RoutingContext> handler : globalMiddleware) {
             router.route().handler(handler);
@@ -128,6 +143,13 @@ public final class VertxRouteRegistry {
 
         // 双斜杠守卫：必须在路由<b>之前</b>，因为 Vert.x 会先把路径折叠掉。
         router.route().handler(slashGuard());
+
+        // SPA 壳与 /api/bootstrap：复用 web 组（EncryptCookies + StartSession）。
+        if (spaHandler != null) {
+            registerSpaRoute(router, "/api/bootstrap", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/app-next/:mode", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/app-next/:mode/*", spaHandler, middlewareRegistry);
+        }
 
         // 源 RouteServiceProvider：event(new ConfigureRoutes($router)) ——
         // 插件（Hook.addRoute）在此注册路由，排在内置 173 条之前、slashGuard 之后。
@@ -185,6 +207,29 @@ public final class VertxRouteRegistry {
     }
 
     // ================================================================== 内部
+
+    /**
+     * SPA 附加路由：使用 web 组的 cookie/session 中间件，但不计入 173 条 PHP 路由。
+     */
+    private static void registerSpaRoute(Router router, String path,
+            Handler<RoutingContext> spaHandler,
+            Map<String, Handler<RoutingContext>> middlewareRegistry) {
+        io.vertx.ext.web.Route route = router.route(path).method(GET);
+        route = route.handler(ctx -> {
+            ctx.put(com.neoskin.web.middleware.LanguageMiddleware.ROUTE_MIDDLEWARE_KEY,
+                    List.of("web"));
+            ctx.next();
+        });
+
+        if (middlewareRegistry != null && !middlewareRegistry.isEmpty()) {
+            for (Handler<RoutingContext> layering : com.neoskin.web.middleware.MiddlewareChain
+                    .handlers(List.of("web"), middlewareRegistry)) {
+                route = route.handler(layering);
+            }
+        }
+
+        route.handler(spaHandler);
+    }
 
     private static String trim(String uri) {
         return uri.equals("/") ? "" : uri;
