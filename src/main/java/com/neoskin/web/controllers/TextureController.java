@@ -59,12 +59,26 @@ public final class TextureController {
         try {
             Iterator<javax.imageio.ImageWriter> writers =
                     ImageIO.getImageWritersByFormatName("webp");
-            available = writers.hasNext();
+            if (writers.hasNext()) {
+                // 仅判断 SPI 存在不够：macOS arm64 有 SPI 但没有原生库，
+                // getDefaultWriteParam() 会抛 ExceptionInInitializerError。
+                javax.imageio.ImageWriter writer = writers.next();
+                try {
+                    writer.getDefaultWriteParam();
+                    available = true;
+                } finally {
+                    writer.dispose();
+                }
+            }
         } catch (Throwable ignored) {
-            // macOS arm64 等平台没有 webp-imageio 原生库时，类初始化不能失败；
             // 回退 PNG 即可（与 PHP 没有 IMG_WEBP 时一致）。
         }
         WEBP_WRITER_AVAILABLE = available;
+    }
+
+    /** 当前平台是否真的能编码 WebP（供测试/诊断使用）。 */
+    public static boolean webpWriterAvailable() {
+        return WEBP_WRITER_AVAILABLE;
     }
 
     private final Option option;
@@ -427,7 +441,8 @@ public final class TextureController {
             } finally {
                 writer.dispose();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // WebP 原生库缺失时可能是 ExceptionInInitializerError，不能漏成 500。
             return png;
         }
     }

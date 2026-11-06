@@ -163,12 +163,18 @@ class TextureControllerTest {
 
         HttpResponse<byte[]> res = sendBytes("GET", "/preview/" + texture.tid(), null);
         assertEquals(200, res.statusCode());
-        // 源：imagetypes() 含 IMG_WEBP 时默认 webp（?png 才 PNG）
-        assertEquals("image/webp", res.headers().firstValue("Content-Type").orElse(null));
+        // 源：imagetypes() 含 IMG_WEBP 时默认 webp（?png 才 PNG）。
+        // macOS arm64 没有 webp-imageio 原生库时回退 PNG。
         byte[] body = res.body();
-        assertTrue(body.length > 12);
-        assertEquals("RIFF", new String(body, 0, 4, java.nio.charset.StandardCharsets.US_ASCII));
-        assertEquals("WEBP", new String(body, 8, 4, java.nio.charset.StandardCharsets.US_ASCII));
+        if (TextureController.webpWriterAvailable()) {
+            assertEquals("image/webp", res.headers().firstValue("Content-Type").orElse(null));
+            assertTrue(body.length > 12);
+            assertEquals("RIFF", new String(body, 0, 4, java.nio.charset.StandardCharsets.US_ASCII));
+            assertEquals("WEBP", new String(body, 8, 4, java.nio.charset.StandardCharsets.US_ASCII));
+        } else {
+            assertEquals("image/png", res.headers().firstValue("Content-Type").orElse(null));
+            assertEquals((byte) 0x89, body[0]);
+        }
 
         // ?png 分支仍是 PNG
         HttpResponse<byte[]> png = sendBytes("GET", "/preview/" + texture.tid() + "?png", null);
