@@ -149,7 +149,7 @@ public final class VertxRouteRegistry {
                     ctx.response().setStatusCode(302).putHeader("Location", "/app-next/site/").end();
                     return;
                 }
-                if (path.equals("/admin") || path.startsWith("/admin/")) {
+                if (path.equals("/admin")) {
                     ctx.response().setStatusCode(302).putHeader("Location", "/app-next/admin/").end();
                     return;
                 }
