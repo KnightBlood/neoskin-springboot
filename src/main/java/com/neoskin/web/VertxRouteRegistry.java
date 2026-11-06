@@ -141,6 +141,22 @@ public final class VertxRouteRegistry {
             router.route().handler(handler);
         }
 
+        // FRONTEND_MODE=next：首页与管理端入口切到共享前端。
+        router.route().handler(ctx -> {
+            if (SpaFrontend.nextMode()) {
+                String path = ctx.normalizedPath();
+                if (path.equals("/")) {
+                    ctx.response().setStatusCode(302).putHeader("Location", "/app-next/site/").end();
+                    return;
+                }
+                if (path.equals("/admin") || path.startsWith("/admin/")) {
+                    ctx.response().setStatusCode(302).putHeader("Location", "/app-next/admin/").end();
+                    return;
+                }
+            }
+            ctx.next();
+        });
+
         // 双斜杠守卫：必须在路由<b>之前</b>，因为 Vert.x 会先把路径折叠掉。
         router.route().handler(slashGuard());
 

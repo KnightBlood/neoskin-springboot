@@ -34,6 +34,11 @@ public final class SpaFrontend implements Handler<RoutingContext> {
 
     private final String version;
 
+    /** {@code FRONTEND_MODE=legacy|next}。 */
+    public static boolean nextMode() {
+        return "next".equalsIgnoreCase(System.getenv("FRONTEND_MODE"));
+    }
+
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version) {
         this.option = option;
         this.users = users;
