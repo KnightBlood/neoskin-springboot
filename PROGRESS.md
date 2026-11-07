@@ -82,3 +82,8 @@
 - 实现：`com.neoskin.web.SpaFrontend`（contractApi/分页/预览）、
   `com.neoskin.db.NotificationRepository`（`countUnread`）、`com.neoskin.config.WebConfig`（装配）。
 - 验证：`mvn -DskipTests compile` 通过；`mvn test` 1086 用例 / 0 fail / 2 skip；CI 验证待推送。
+
+### 2026-11-07（P4 增量）
+- 新增 `GET /api/admin/dashboard`：用户/角色/材质数量与存储空间。
+- 实现：`com.neoskin.web.SpaFrontend`（管理员校验 + 统计）、`WebConfig` 注入 `PlayerRepository`。
+- 验证：`mvn -DskipTests compile` 通过；`mvn test` 1086 用例 / 0 fail / 2 skip。

@@ -626,6 +626,7 @@ public class WebConfig {
             com.neoskin.service.UpdateRunner updateRunner,
             NotificationRepository notificationRepository,
             com.neoskin.db.TextureRepository textureRepository,
+            com.neoskin.db.PlayerRepository playerRepository,
             Communications communications,
             javax.sql.DataSource dataSource) {
         Map<String, Handler<RoutingContext>> registry = middlewareRegistry(settings, paths,
@@ -652,7 +653,7 @@ public class WebConfig {
                         notificationRepository,
                         new com.neoskin.db.ReportRepository(dataSource, userRepository,
                                 textureRepository),
-                        textureRepository, communications, settings.getTimezone()))
+                        textureRepository, playerRepository, communications, settings.getTimezone()))
                 .withMiddleware(registry)
                 .withGlobalMiddleware(global)
                 .withFailureHandler(failure);

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.neoskin.db.NotificationRepository;
+import com.neoskin.db.PlayerRepository;
 import com.neoskin.db.ReportRepository;
 import com.neoskin.db.TextureRepository;
 import com.neoskin.db.UserRepository;
@@ -47,6 +48,8 @@ public final class SpaFrontend implements Handler<RoutingContext> {
 
     private final TextureRepository textures;
 
+    private final PlayerRepository players;
+
     private final Communications communications;
 
     private final String timezone;
@@ -57,12 +60,13 @@ public final class SpaFrontend implements Handler<RoutingContext> {
     }
 
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version) {
-        this(option, users, publicDir, version, null, null, null, null, "Asia/Shanghai");
+        this(option, users, publicDir, version, null, null, null, null, null, "Asia/Shanghai");
     }
 
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version,
             NotificationRepository notifications, ReportRepository reports,
-            TextureRepository textures, Communications communications, String timezone) {
+            TextureRepository textures, PlayerRepository players, Communications communications,
+            String timezone) {
         this.option = option;
         this.users = users;
         this.publicDir = publicDir;
@@ -70,6 +74,7 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         this.notifications = notifications;
         this.reports = reports;
         this.textures = textures;
+        this.players = players;
         this.communications = communications;
         this.timezone = timezone;
     }
@@ -145,7 +150,8 @@ public final class SpaFrontend implements Handler<RoutingContext> {
     private static boolean isContractPath(String path) {
         return path.equals("/api/user/inbox")
                 || path.startsWith("/api/user/inbox/")
-                || path.equals("/api/user/reports");
+                || path.equals("/api/user/reports")
+                || path.equals("/api/admin/dashboard");
     }
 
     private void contractApi(RoutingContext ctx, String path) {
@@ -160,6 +166,10 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         }
 
         try {
+            if (path.equals("/api/admin/dashboard")) {
+                writeDashboard(ctx, user);
+                return;
+            }
             if (path.equals("/api/user/reports")) {
                 writeReports(ctx, user);
                 return;
@@ -178,6 +188,27 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         } catch (java.sql.SQLException e) {
             ctx.response().setStatusCode(500).end("Internal Server Error");
         }
+    }
+
+    private void writeDashboard(RoutingContext ctx, UserRepository.UserRow user)
+            throws java.sql.SQLException {
+        if (!user.isAdmin()) {
+            writeJson(ctx, 403, new PhpJson.Array().with("message", "Forbidden"));
+            return;
+        }
+        long storage = textures.sumSize();
+        writeJson(ctx, 200, new PhpJson.Array()
+                .with("users", users.countAll())
+                .with("players", players.countAll())
+                .with("textures", textures.countAll())
+                .with("storage", storage)
+                .with("storageHuman", storageDisplay(storage)));
+    }
+
+    private static String storageDisplay(long storage) {
+        return storage > 1024
+                ? String.format(java.util.Locale.ROOT, "%.1fMB", storage / 1024.0)
+                : storage + "KB";
     }
 
     private void writeInbox(RoutingContext ctx, UserRepository.UserRow user) throws java.sql.SQLException {
