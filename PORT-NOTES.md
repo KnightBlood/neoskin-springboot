@@ -55,3 +55,12 @@
 - 错误页分流与 PHP `Handler::render()` 对齐；完整字节 diff 不做。
 - Validator 实现被用到的规则子集；未实现规则抛异常而不是静默放行。
 - 邮件发送始终走真实 SMTP（测试只覆盖不触网分支）。
+
+## 9. 共享前端新增契约端点（2026-11-07）
+
+- 为共享前端 P3 增加 3 个**站内信/举报 JSON** 端点（PHP 原版只有 HTML 页面）：
+  `GET /api/user/inbox`、`GET /api/user/inbox/{id}`、`GET /api/user/reports`。
+- 这些是 NeoSkinFrontend 契约 v1 的增量端点，不计入 PHP 174 条路由；
+  由 `com.neoskin.web.SpaFrontend` 在 PHP 路由表之前处理。
+- 返回结构与 `NeoSkinFrontend/docs/BACKEND-CONTRACT.md` §7.2 一致；
+  匿名访问返回 `401 application/json`。
