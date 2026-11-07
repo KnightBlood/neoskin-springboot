@@ -173,6 +173,11 @@ public final class TranslationsController {
             if (session != null) {
                 session.put("success", true);
             }
+            if (expectsJson(ctx)) {
+                json(ctx, 200, message(0,
+                        translator.trans("admin.i18n.added", Map.of(), null)));
+                return;
+            }
             redirect(ctx, "/admin/i18n");
         };
     }

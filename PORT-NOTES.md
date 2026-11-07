@@ -71,3 +71,5 @@
   属于 NeoSkinFrontend 契约 v1 增量端点，不计入 PHP 174 条路由；`com.neoskin.web.SpaFrontend` 在 PHP 路由表之前处理，校验 `permission >= 1`。
 - 匿名 401、非管理员 403；图表仍复用既有 GET /admin/chart。
 
+
+- `POST /admin/i18n` 增加 JSON 响应分支（`Accept: application/json` → `{code,message}`；否则 302），供管理端 SPA 使用。
