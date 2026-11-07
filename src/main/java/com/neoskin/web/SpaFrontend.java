@@ -151,7 +151,8 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         return path.equals("/api/user/inbox")
                 || path.startsWith("/api/user/inbox/")
                 || path.equals("/api/user/reports")
-                || path.equals("/api/admin/dashboard");
+                || path.equals("/api/admin/dashboard")
+                || path.startsWith("/api/admin/options/");
     }
 
     private void contractApi(RoutingContext ctx, String path) {
@@ -166,6 +167,10 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         }
 
         try {
+            if (path.startsWith("/api/admin/options/")) {
+                writeOptionsGroup(ctx, path, user);
+                return;
+            }
             if (path.equals("/api/admin/dashboard")) {
                 writeDashboard(ctx, user);
                 return;
@@ -188,6 +193,146 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         } catch (java.sql.SQLException e) {
             ctx.response().setStatusCode(500).end("Internal Server Error");
         }
+    }
+
+    private static final Map<String, List<String>> OPTION_GROUPS = Map.of(
+            "options", List.of(
+                    "site_name", "site_description", "site_url", "register_with_player_name",
+                    "require_verification", "regs_per_ip", "max_upload_file_size",
+                    "max_texture_width", "player_name_rule", "custom_player_name_regexp",
+                    "player_name_length_min", "player_name_length_max",
+                    "auto_del_invalid_texture", "allow_downloading_texture",
+                    "status_code_for_private", "texture_name_regexp", "content_policy",
+                    "meta_keywords", "meta_description", "meta_extras", "recaptcha_sitekey",
+                    "recaptcha_secretkey", "recaptcha_invisible", "update_source",
+                    "plugin_market_source"),
+            "customize", List.of(
+                    "home_pic_url", "favicon_url", "transparent_navbar", "hide_intro",
+                    "fixed_bg", "copyright_prefer", "copyright_text", "custom_css",
+                    "custom_js", "navbar_color", "sidebar_color"),
+            "score", List.of(
+                    "score_per_storage", "private_score_per_storage", "score_per_closet_item",
+                    "return_score", "score_per_player", "user_initial_score",
+                    "reporter_score_modification", "reporter_reward_score", "sign_gap_time",
+                    "sign_after_zero", "score_award_per_texture",
+                    "take_back_scores_after_deletion", "score_award_per_like"),
+            "resource", List.of(
+                    "force_ssl", "auto_detect_asset_url", "cdn_address", "cache_expire_time",
+                    "enable_avatar_cache", "enable_preview_cache",
+                    "allow_downloading_texture"));
+
+    private static final List<String> BOOL_OPTIONS = List.of(
+            "transparent_navbar", "hide_intro", "fixed_bg", "register_with_player_name",
+            "require_verification", "auto_del_invalid_texture", "allow_downloading_texture",
+            "recaptcha_invisible", "return_score", "sign_after_zero",
+            "take_back_scores_after_deletion", "enable_avatar_cache", "enable_preview_cache",
+            "force_ssl", "auto_detect_asset_url");
+
+    private void writeOptionsGroup(RoutingContext ctx, String path, UserRepository.UserRow user)
+            throws java.sql.SQLException {
+        if (!user.isAdmin()) {
+            writeJson(ctx, 403, new PhpJson.Array().with("message", "Forbidden"));
+            return;
+        }
+
+        String group = path.substring("/api/admin/options/".length());
+        List<String> keys = OPTION_GROUPS.get(group);
+        if (keys == null) {
+            notFound(ctx);
+            return;
+        }
+
+        String method = ctx.request().method().name();
+        if (!"GET".equalsIgnoreCase(method) && !"PUT".equalsIgnoreCase(method)) {
+            ctx.response().setStatusCode(405).end();
+            return;
+        }
+
+        String locale = Option.currentLocale();
+        if (locale == null || locale.isEmpty()) {
+            locale = Locales.APP_LOCALE;
+        }
+
+        if ("GET".equalsIgnoreCase(method)) {
+            PhpJson.Array values = new PhpJson.Array();
+            for (String key : keys) {
+                boolean localized = group.equals("options")
+                        && (key.equals("site_name") || key.equals("site_description")
+                        || key.equals("content_policy"));
+                Object value = localized
+                        ? option.getLocalized(key, "")
+                        : option.getString(key, "");
+                values.with(key, value == null ? "" : value);
+            }
+            if (group.equals("score")) {
+                String[] parts = option.getString("sign_score", "").split(",");
+                values.with("sign_score_from", parts.length > 0 ? parts[0].trim() : "");
+                values.with("sign_score_to", parts.length > 1 ? parts[1].trim() : "");
+            }
+            writeJson(ctx, 200, values);
+            return;
+        }
+
+        io.vertx.core.json.JsonObject body = ctx.body() == null ? null : ctx.body().asJsonObject();
+        if (body == null) {
+            body = new io.vertx.core.json.JsonObject();
+        }
+        if (group.equals("options")) {
+            for (String key : List.of("site_name", "site_description", "content_policy")) {
+                String value = body.getString(key, "");
+                if (!value.isEmpty()) {
+                    option.set(key + "_" + locale, value);
+                }
+            }
+        }
+        if (group.equals("score")
+                && (body.containsKey("sign_score_from") || body.containsKey("sign_score_to"))) {
+            option.set("sign_score", body.getString("sign_score_from", "")
+                    + "," + body.getString("sign_score_to", ""));
+        }
+
+        for (String key : keys) {
+            if (group.equals("options")
+                    && (key.equals("site_name") || key.equals("site_description")
+                    || key.equals("content_policy"))) {
+                continue;
+            }
+            if (BOOL_OPTIONS.contains(key)) {
+                option.set(key, truthy(body.getValue(key)) ? "true" : "false");
+                continue;
+            }
+            if (!body.containsKey(key)) {
+                continue;
+            }
+            Object raw = body.getValue(key);
+            String value = raw == null ? "" : String.valueOf(raw).trim();
+            if (key.equals("site_url")) {
+                while (value.endsWith("/")) {
+                    value = value.substring(0, value.length() - 1);
+                }
+                if (value.endsWith("/index.php")) {
+                    value = value.substring(0, value.length() - 10);
+                }
+            } else if (key.equals("cdn_address")) {
+                while (value.endsWith("/")) {
+                    value = value.substring(0, value.length() - 1);
+                }
+            }
+            option.set(key, value);
+        }
+
+        writeJson(ctx, 200, new PhpJson.Array().with("code", 0).with("message", "保存成功"));
+    }
+
+    private static boolean truthy(Object value) {
+        if (value instanceof Boolean flag) {
+            return flag;
+        }
+        if (value == null) {
+            return false;
+        }
+        String text = String.valueOf(value).trim().toLowerCase(java.util.Locale.ROOT);
+        return text.equals("1") || text.equals("true") || text.equals("on") || text.equals("yes");
     }
 
     private void writeDashboard(RoutingContext ctx, UserRepository.UserRow user)
