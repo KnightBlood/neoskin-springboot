@@ -70,3 +70,15 @@
 - 实现：`com.neoskin.web.SpaFrontend`、`VertxRouteRegistry`、`VertxHttpServer`、`WebConfig`。
 - `.gitignore` 放开 `public/app-next`；构建产物已发布（含 `manifest.json`）。
 - 联调验证：登录 → `/app-next/site/user` → `/app-next/admin/` 仪表盘，0 console error。
+
+---
+
+## 9. 共享前端 P3（2026-11-07）
+
+- 新增用户中心契约端点，挂在 `SpaFrontend`（PHP 路由表之前）：
+  - `GET /api/user/inbox?page=&per_page=`：分页 + `unread`，条目含 `preview`/`format`/`communication_id`；
+  - `GET /api/user/inbox/{id}`：`{code,data}`，自动已读；
+  - `GET /api/user/reports?page=&per_page=`：举报分页，含 `texture_name`。
+- 实现：`com.neoskin.web.SpaFrontend`（contractApi/分页/预览）、
+  `com.neoskin.db.NotificationRepository`（`countUnread`）、`com.neoskin.config.WebConfig`（装配）。
+- 验证：`mvn -DskipTests compile` 通过；`mvn test` 1086 用例 / 0 fail / 2 skip；CI 验证待推送。

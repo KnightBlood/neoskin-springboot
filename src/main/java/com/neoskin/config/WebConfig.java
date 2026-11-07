@@ -623,7 +623,11 @@ public class WebConfig {
             NeoSkinSettings settings, AppPaths paths, Option option, Translator translator,
             com.neoskin.db.UserRepository userRepository,
             com.neoskin.service.cache.CacheStore cacheStore,
-            com.neoskin.service.UpdateRunner updateRunner) {
+            com.neoskin.service.UpdateRunner updateRunner,
+            NotificationRepository notificationRepository,
+            com.neoskin.db.TextureRepository textureRepository,
+            Communications communications,
+            javax.sql.DataSource dataSource) {
         Map<String, Handler<RoutingContext>> registry = middlewareRegistry(settings, paths,
                 option, translator, userRepository, cacheStore,
                 () -> {
@@ -644,7 +648,11 @@ public class WebConfig {
                 routes, resolver, settings.getHttp().getPort())
                 .withStaticRoot(paths.publicDir())
                 .withSpa(new com.neoskin.web.SpaFrontend(option, userRepository,
-                        paths.publicDir(), settings.getVersion()))
+                        paths.publicDir(), settings.getVersion(),
+                        notificationRepository,
+                        new com.neoskin.db.ReportRepository(dataSource, userRepository,
+                                textureRepository),
+                        textureRepository, communications, settings.getTimezone()))
                 .withMiddleware(registry)
                 .withGlobalMiddleware(global)
                 .withFailureHandler(failure);

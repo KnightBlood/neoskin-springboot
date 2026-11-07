@@ -1,14 +1,21 @@
 package com.neoskin.web;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.neoskin.db.NotificationRepository;
+import com.neoskin.db.ReportRepository;
+import com.neoskin.db.TextureRepository;
 import com.neoskin.db.UserRepository;
+import com.neoskin.service.Communications;
 import com.neoskin.service.Option;
+import com.neoskin.support.PhpDate;
 import com.neoskin.support.PhpJson;
 import com.neoskin.web.i18n.Locales;
 import com.neoskin.web.middleware.StartSession;
@@ -34,16 +41,37 @@ public final class SpaFrontend implements Handler<RoutingContext> {
 
     private final String version;
 
+    private final NotificationRepository notifications;
+
+    private final ReportRepository reports;
+
+    private final TextureRepository textures;
+
+    private final Communications communications;
+
+    private final String timezone;
+
     /** {@code FRONTEND_MODE=legacy|next}。 */
     public static boolean nextMode() {
         return "next".equalsIgnoreCase(System.getenv("FRONTEND_MODE"));
     }
 
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version) {
+        this(option, users, publicDir, version, null, null, null, null, "Asia/Shanghai");
+    }
+
+    public SpaFrontend(Option option, UserRepository users, Path publicDir, String version,
+            NotificationRepository notifications, ReportRepository reports,
+            TextureRepository textures, Communications communications, String timezone) {
         this.option = option;
         this.users = users;
         this.publicDir = publicDir;
         this.version = version;
+        this.notifications = notifications;
+        this.reports = reports;
+        this.textures = textures;
+        this.communications = communications;
+        this.timezone = timezone;
     }
 
     @Override
@@ -51,6 +79,10 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         String path = ctx.normalizedPath();
         if (path.equals("/api/bootstrap")) {
             bootstrap(ctx);
+            return;
+        }
+        if (isContractPath(path)) {
+            contractApi(ctx, path);
             return;
         }
         if (!path.startsWith("/app-next/")) {
@@ -108,6 +140,191 @@ public final class SpaFrontend implements Handler<RoutingContext> {
             return;
         }
         shell(ctx, mode, index);
+    }
+
+    private static boolean isContractPath(String path) {
+        return path.equals("/api/user/inbox")
+                || path.startsWith("/api/user/inbox/")
+                || path.equals("/api/user/reports");
+    }
+
+    private void contractApi(RoutingContext ctx, String path) {
+        if (!"GET".equalsIgnoreCase(ctx.request().method().name())) {
+            ctx.next();
+            return;
+        }
+        UserRepository.UserRow user = currentUser(ctx);
+        if (user == null) {
+            writeJson(ctx, 401, new PhpJson.Array().with("message", "Unauthenticated."));
+            return;
+        }
+
+        try {
+            if (path.equals("/api/user/reports")) {
+                writeReports(ctx, user);
+                return;
+            }
+            if (path.equals("/api/user/inbox")) {
+                writeInbox(ctx, user);
+                return;
+            }
+            String id = URLDecoder.decode(path.substring("/api/user/inbox/".length()),
+                    StandardCharsets.UTF_8);
+            if (id.isEmpty() || id.contains("/")) {
+                notFound(ctx);
+                return;
+            }
+            writeMessage(ctx, user, id);
+        } catch (java.sql.SQLException e) {
+            ctx.response().setStatusCode(500).end("Internal Server Error");
+        }
+    }
+
+    private void writeInbox(RoutingContext ctx, UserRepository.UserRow user) throws java.sql.SQLException {
+        int page = positive(ctx.request().getParam("page"), 1);
+        int perPage = Math.min(100, Math.max(1, positive(ctx.request().getParam("per_page"), 10)));
+        long total = notifications.countInbox(user.uid());
+        long unread = notifications.countUnread(user.uid());
+
+        List<Object> items = new ArrayList<>();
+        for (NotificationRepository.Row row : notifications.inboxPage(user.uid(), perPage,
+                (long) (page - 1) * perPage)) {
+            if (!communications.visible(row)) {
+                continue;
+            }
+            Map<String, Object> data = row.data();
+            items.add(new PhpJson.Array()
+                    .with("id", row.id)
+                    .with("title", communications.title(row))
+                    .with("preview", preview(communications.content(row), 120))
+                    .with("format", data.get("format") == null ? "html" : data.get("format"))
+                    .with("read_at", emptyToNull(row.readAt))
+                    .with("created_at", row.createdAt)
+                    .with("communication_id", communicationId(data)));
+        }
+
+        writeJson(ctx, 200, new PhpJson.Array()
+                .with("data", items)
+                .with("current_page", page)
+                .with("last_page", lastPage(total, perPage))
+                .with("per_page", perPage)
+                .with("total", total)
+                .with("unread", unread));
+    }
+
+    private void writeMessage(RoutingContext ctx, UserRepository.UserRow user, String id)
+            throws java.sql.SQLException {
+        NotificationRepository.Row row = notifications.findByNotifiableAndId(user.uid(), id);
+        if (row == null || !communications.visible(row)) {
+            notFound(ctx);
+            return;
+        }
+
+        String readAt = row.readAt;
+        if (readAt == null || readAt.isEmpty()) {
+            readAt = PhpDate.now(timezone);
+            notifications.markAsRead(id, readAt);
+        }
+        Map<String, Object> data = row.data();
+
+        writeJson(ctx, 200, new PhpJson.Array()
+                .with("code", 0)
+                .with("message", "")
+                .with("data", new PhpJson.Array()
+                        .with("id", row.id)
+                        .with("title", communications.title(row))
+                        .with("content", communications.content(row))
+                        .with("format", data.get("format") == null ? "html" : data.get("format"))
+                        .with("read_at", readAt)
+                        .with("created_at", row.createdAt)
+                        .with("communication_id", communicationId(data))));
+    }
+
+    private void writeReports(RoutingContext ctx, UserRepository.UserRow user) throws java.sql.SQLException {
+        int page = positive(ctx.request().getParam("page"), 1);
+        int perPage = Math.min(100, Math.max(1, positive(ctx.request().getParam("per_page"), 10)));
+        ReportRepository.Page result = reports.pageByReporter((int) user.uid(), page, perPage);
+
+        List<Object> items = new ArrayList<>();
+        for (ReportRepository.Row row : result.rows()) {
+            TextureRepository.Row texture = textures.findByTid(row.tid());
+            items.add(new PhpJson.Array()
+                    .with("id", row.id())
+                    .with("tid", row.tid())
+                    .with("texture_name", texture == null ? "" : texture.name())
+                    .with("reason", row.reason())
+                    .with("status", row.status())
+                    .with("report_at", row.reportAt()));
+        }
+
+        writeJson(ctx, 200, new PhpJson.Array()
+                .with("data", items)
+                .with("current_page", result.currentPage())
+                .with("last_page", lastPage(result.total(), perPage))
+                .with("per_page", perPage)
+                .with("total", result.total()));
+    }
+
+    private static int positive(String raw, int fallback) {
+        try {
+            int value = Integer.parseInt(raw);
+            return value > 0 ? value : fallback;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private static int lastPage(long total, int perPage) {
+        return total <= 0 ? 1 : (int) ((total + perPage - 1) / perPage);
+    }
+
+    private static Long communicationId(Map<String, Object> data) {
+        Object raw = data.get("communication_id");
+        if (raw == null) {
+            return null;
+        }
+        try {
+            long value = Long.parseLong(String.valueOf(raw));
+            return value > 0 ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isEmpty() ? null : value;
+    }
+
+    private static String preview(String content, int limit) {
+        if (content == null || content.isEmpty()) {
+            return "";
+        }
+        String plain = content.replaceAll("<[^>]*>", " ")
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
+        plain = plain.replaceAll("\\s+", " ").trim();
+        if (plain.codePointCount(0, plain.length()) <= limit) {
+            return plain;
+        }
+        int end = plain.offsetByCodePoints(0, limit);
+        return plain.substring(0, end);
+    }
+
+    private static void notFound(RoutingContext ctx) {
+        ctx.response().setStatusCode(404)
+                .putHeader("Content-Type", "application/json")
+                .end("{\"message\":\"Not Found\"}");
+    }
+
+    private static void writeJson(RoutingContext ctx, int status, Object body) {
+        ctx.response()
+                .setStatusCode(status)
+                .putHeader("Content-Type", "application/json")
+                .end(PhpJson.encode(body));
     }
 
     private void bootstrap(RoutingContext ctx) {

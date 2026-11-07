@@ -222,6 +222,38 @@ public final class NotificationRepository {
         }
     }
 
+    /** 未读数（同样的可见性过滤 + {@code read_at IS NULL}）。 */
+    public long countUnread(long notifiableId) throws SQLException {
+        SqlDialect dialect = schema.dialect();
+        String commId = dialect.castText(dialect.jsonText("n." + q("data"), "communication_id"));
+        String token = dialect.castText(dialect.jsonText("n." + q("data"), "delivery_token"));
+
+        String sql = "SELECT COUNT(*) FROM " + table() + " n"
+                + " WHERE n." + q("notifiable_type") + " = ?"
+                + " AND n." + q("notifiable_id") + " = ?"
+                + " AND n." + q("read_at") + " IS NULL"
+                + " AND (" + commId + " IS NULL OR EXISTS (SELECT 1 FROM "
+                + schema.table("communications") + " c"
+                + " WHERE c." + q("id") + " = " + dialect.jsonInt("n." + q("data"), "communication_id")
+                + " AND c." + q("status") + " = ?"
+                + " AND c." + q("kind") + " IN (?, ?)"
+                + " AND (c." + q("delivery_token") + " = " + token
+                + " OR (c." + q("delivery_token") + " IS NULL AND " + token + " IS NULL))))";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            int i = 1;
+            stmt.setString(i++, NOTIFIABLE_TYPE);
+            stmt.setLong(i++, notifiableId);
+            stmt.setString(i++, CommunicationRepository.STATUS_PUBLISHED);
+            stmt.setString(i++, CommunicationRepository.KIND_MESSAGE);
+            stmt.setString(i++, CommunicationRepository.KIND_BOTH);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ 管理
 
     /** {@code DB::table('notifications')->where('data->communication_id', $row->id)->count()}。 */
