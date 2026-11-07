@@ -629,6 +629,8 @@ public class WebConfig {
             com.neoskin.db.PlayerRepository playerRepository,
             CommunicationRepository communicationRepository,
             Communications communications,
+            com.neoskin.web.i18n.JavaScript javaScript,
+            com.neoskin.service.BlessingFilter filter,
             javax.sql.DataSource dataSource) {
         Map<String, Handler<RoutingContext>> registry = middlewareRegistry(settings, paths,
                 option, translator, userRepository, cacheStore,
@@ -655,7 +657,10 @@ public class WebConfig {
                         new com.neoskin.db.ReportRepository(dataSource, userRepository,
                                 textureRepository),
                         textureRepository, playerRepository, communicationRepository,
-                        communications, settings.getTimezone()))
+                        communications,
+                        new UpdateController(option, translator, userRepository, settings,
+                                paths, javaScript, filter, settings.isDebug()).info(),
+                        settings.getTimezone()))
                 .withMiddleware(registry)
                 .withGlobalMiddleware(global)
                 .withFailureHandler(failure);

@@ -144,6 +144,35 @@ public final class UpdateController {
         };
     }
 
+    /** {@code GET /api/admin/update/info}：更新信息 JSON（管理端 SPA）。 */
+    public Handler<RoutingContext> info() {
+        return ctx -> {
+            try {
+                Map<String, Object> info = getUpdateInfo();
+                Map<String, Object> can = canUpdate(info.get("info"));
+                Object error = info.get("error");
+                if (error == null || String.valueOf(error).isEmpty()) {
+                    error = can.get("reason");
+                }
+                if (error != null && String.valueOf(error).isEmpty()) {
+                    error = null;
+                }
+                SessionStore session = ctx.get(StartSession.CTX_KEY);
+                Map<String, Object> body = new LinkedHashMap<>();
+                body.put("latest", nested(info, "info", "latest"));
+                body.put("current", settings.getVersion());
+                body.put("error", error == null ? "" : error);
+                body.put("can_update", can.get("can"));
+                body.put("package", session == null ? null
+                        : session.get("system_update_package"));
+                body.put("upload_limits", packages.uploadLimits().current());
+                json(ctx, 200, body);
+            } catch (Exception e) {
+                ctx.fail(e);
+            }
+        };
+    }
+
     // ============================================================ download
 
     /** {@code POST admin/update/download}。 */
