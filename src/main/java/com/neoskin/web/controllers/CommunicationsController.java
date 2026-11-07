@@ -193,6 +193,12 @@ public final class CommunicationsController {
                     return;
                 }
                 CommunicationRepository.Row message = service.save(data, null, user == null ? 0 : user.uid());
+                if (wantsJson(ctx)) {
+                    json(ctx, 200, savedBody(
+                            "published".equals(message.status) ? "内容已发布。" : "草稿已保存。",
+                            message.id, message.status));
+                    return;
+                }
                 Map<String, Object> params = "announcement".equals(message.kind)
                         ? Map.of("announcement", 1) : Map.of("edit", message.id);
                 redirect(ctx, RouteUrlGenerator.forHost(hostOf(ctx))
@@ -226,6 +232,10 @@ public final class CommunicationsController {
                 }
                 CommunicationRepository.Row saved = service.save(data, communication,
                         user == null ? 0 : user.uid());
+                if (wantsJson(ctx)) {
+                    json(ctx, 200, savedBody("内容已更新。", saved.id, saved.status));
+                    return;
+                }
                 Map<String, Object> params = "announcement".equals(saved.kind)
                         ? Map.of("announcement", 1) : Map.of("edit", saved.id);
                 redirect(ctx, RouteUrlGenerator.forHost(hostOf(ctx))
@@ -249,6 +259,13 @@ public final class CommunicationsController {
                     return;
                 }
                 service.withdraw(communication);
+                if (wantsJson(ctx)) {
+                    Map<String, Object> body = new LinkedHashMap<>();
+                    body.put("code", 0);
+                    body.put("message", "内容已撤回。");
+                    json(ctx, 200, body);
+                    return;
+                }
                 redirect(ctx, RouteUrlGenerator.forHost(hostOf(ctx))
                         .route("admin.communications.index", Map.of(), true),
                         "communication_notice", "内容已撤回。");
@@ -522,6 +539,21 @@ public final class CommunicationsController {
         ctx.response().setStatusCode(422)
                 .putHeader("Content-Type", "application/json")
                 .end(Buffer.buffer(payload, "UTF-8"));
+    }
+
+    private static boolean wantsJson(RoutingContext ctx) {
+        return ctx.request().getHeader("X-Neoskin-Spa") != null;
+    }
+
+    private static Map<String, Object> savedBody(String message, long id, String status) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", 0);
+        body.put("message", message);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", id);
+        data.put("status", status);
+        body.put("data", data);
+        return body;
     }
 
     private void json(RoutingContext ctx, int status, Object body) {

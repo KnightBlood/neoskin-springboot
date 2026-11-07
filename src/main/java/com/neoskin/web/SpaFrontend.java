@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.neoskin.db.CommunicationRepository;
 import com.neoskin.db.NotificationRepository;
 import com.neoskin.db.PlayerRepository;
 import com.neoskin.db.ReportRepository;
@@ -44,6 +45,8 @@ public final class SpaFrontend implements Handler<RoutingContext> {
 
     private final NotificationRepository notifications;
 
+    private final CommunicationRepository communicationsRepo;
+
     private final ReportRepository reports;
 
     private final TextureRepository textures;
@@ -60,18 +63,21 @@ public final class SpaFrontend implements Handler<RoutingContext> {
     }
 
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version) {
-        this(option, users, publicDir, version, null, null, null, null, null, "Asia/Shanghai");
+        this(option, users, publicDir, version, null, null, null, null, null, null,
+                "Asia/Shanghai");
     }
 
     public SpaFrontend(Option option, UserRepository users, Path publicDir, String version,
             NotificationRepository notifications, ReportRepository reports,
-            TextureRepository textures, PlayerRepository players, Communications communications,
+            TextureRepository textures, PlayerRepository players,
+            CommunicationRepository communicationRepository, Communications communications,
             String timezone) {
         this.option = option;
         this.users = users;
         this.publicDir = publicDir;
         this.version = version;
         this.notifications = notifications;
+        this.communicationsRepo = communicationRepository;
         this.reports = reports;
         this.textures = textures;
         this.players = players;
@@ -152,7 +158,9 @@ public final class SpaFrontend implements Handler<RoutingContext> {
                 || path.startsWith("/api/user/inbox/")
                 || path.equals("/api/user/reports")
                 || path.equals("/api/admin/dashboard")
-                || path.startsWith("/api/admin/options/");
+                || path.startsWith("/api/admin/options/")
+                || path.equals("/api/admin/communications")
+                || path.startsWith("/api/admin/communications/");
     }
 
     private void contractApi(RoutingContext ctx, String path) {
@@ -169,6 +177,11 @@ public final class SpaFrontend implements Handler<RoutingContext> {
         try {
             if (path.startsWith("/api/admin/options/")) {
                 writeOptionsGroup(ctx, path, user);
+                return;
+            }
+            if (path.equals("/api/admin/communications")
+                    || path.startsWith("/api/admin/communications/")) {
+                writeCommunications(ctx, path, user);
                 return;
             }
             if (path.equals("/api/admin/dashboard")) {
@@ -227,6 +240,72 @@ public final class SpaFrontend implements Handler<RoutingContext> {
             "recaptcha_invisible", "return_score", "sign_after_zero",
             "take_back_scores_after_deletion", "enable_avatar_cache", "enable_preview_cache",
             "force_ssl", "auto_detect_asset_url");
+
+    private void writeCommunications(RoutingContext ctx, String path,
+            UserRepository.UserRow user) throws java.sql.SQLException {
+        if (!user.isAdmin()) {
+            writeJson(ctx, 403, new PhpJson.Array().with("message", "Forbidden"));
+            return;
+        }
+
+        if (path.equals("/api/admin/communications")) {
+            int page = positive(ctx.request().getParam("page"), 1);
+            int perPage = 15;
+            long total = communicationsRepo.countMessages();
+            List<Object> items = new ArrayList<>();
+            for (CommunicationRepository.Row row : communicationsRepo.messagePage(
+                    perPage, (long) (page - 1) * perPage)) {
+                items.add(new PhpJson.Array()
+                        .with("id", row.id)
+                        .with("title", row.title)
+                        .with("kind", row.kind)
+                        .with("status", row.status)
+                        .with("read_count", notifications.countRead(row.id))
+                        .with("delivery_count", notifications.countDelivery(row.id))
+                        .with("updated_at", row.updatedAt));
+            }
+            writeJson(ctx, 200, new PhpJson.Array()
+                    .with("data", items)
+                    .with("current_page", page)
+                    .with("last_page", lastPage(total, perPage))
+                    .with("per_page", perPage)
+                    .with("total", total));
+            return;
+        }
+
+        long id;
+        try {
+            id = Long.parseLong(path.substring("/api/admin/communications/".length()));
+        } catch (NumberFormatException e) {
+            notFound(ctx);
+            return;
+        }
+        CommunicationRepository.Row row = communicationsRepo.find(id);
+        if (row == null) {
+            notFound(ctx);
+            return;
+        }
+
+        Object blocks = row.blocks == null ? new ArrayList<>() : row.blocks;
+        Map<String, Object> audience = new java.util.LinkedHashMap<>();
+        audience.put("receiver", "all");
+        if (row.audience instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                audience.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+        }
+
+        writeJson(ctx, 200, new PhpJson.Array()
+                .with("id", row.id)
+                .with("title", row.title)
+                .with("kind", row.kind)
+                .with("status", row.status)
+                .with("locale", row.locale)
+                .with("editor", row.editor == null || row.editor.isEmpty() ? "blocks" : row.editor)
+                .with("source", row.source == null ? "" : row.source)
+                .with("blocks", blocks)
+                .with("audience", audience));
+    }
 
     private void writeOptionsGroup(RoutingContext ctx, String path, UserRepository.UserRow user)
             throws java.sql.SQLException {
