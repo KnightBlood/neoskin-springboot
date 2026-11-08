@@ -116,3 +116,4 @@
   两个 SPA 壳与 `/api/bootstrap` 均 200；站点/管理端页面 0 console error。
 - `FRONTEND_MODE=legacy` 回滚：`GET /` 返回 legacy 页面（含 `#blessing-extra`），
   `/app-next/site/` 仍可访问。
+- Playwright 浏览器 E2E（`NEOSKIN_BROWSER_E2E=1`）通过。
