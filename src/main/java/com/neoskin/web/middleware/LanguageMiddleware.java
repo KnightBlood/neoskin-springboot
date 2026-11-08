@@ -48,8 +48,20 @@ public final class LanguageMiddleware implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext ctx) {
-        // $request->input('lang')：body 优先、回落 query（两者都已归一化）
+        // $request->input('lang')：body 优先、回落 query（两者都已归一化）。
+        //
+        // 注意顺序坑：本中间件挂在全局栈（先于路由分发），而
+        // {@link RequestInput#normalizer()}（解析 query/body 进 ctx bag）在
+        // 路由级中间件层 —— 全局栈跑到这里时 bag 还不存在。Laravel 的
+        // input() 是对原始请求的惰性解析，不依赖中间件预处理；移植时
+        // 直接解析原始 query 兜底，并保留 ?lang=（空串）挡 cookie 的
+        // quirk（空串不转 null，见 DetectLanguagePrefer 类注释第二坑）。
         String lang = RequestInput.inputString(ctx, "lang");
+
+        if (lang == null) {
+            Object raw = RequestInput.parseQuery(ctx.request().query()).get("lang");
+            lang = raw == null ? null : com.neoskin.support.PhpString.cast(raw);
+        }
 
         // $request->cookie('locale')：此刻还没解密，读到的就是原始明文
         Cookie raw = ctx.request().getCookie(DetectLanguagePrefer.COOKIE_NAME);
