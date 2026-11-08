@@ -130,3 +130,4 @@
 - 新增 `.github/workflows/release.yml`：推送 `v*` tag 后在 GitHub runner 构建并发布
   `neoskin-springboot_<version>.zip`，包含 `neoskin.jar`（内嵌 legacy `public/app`）、`public/app-next` 与部署文档。
 - 共享前端产物更新为 site `index-pnUYroLe.js` / admin `index-DOqbNUvq.js`。
+- 验证：`mvn test` 1086 用例，0 fail / 2 skipped（品牌默认值断言已调整）。
