@@ -26,12 +26,12 @@ public final class OptionDefaults {
     static {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("site_url", "");
-        m.put("site_name", "Blessing Skin");
-        m.put("site_description", "Open-source PHP Minecraft Skin Hosting Service");
+        m.put("site_name", "NeoSkin");
+        m.put("site_description", "NeoSkin Minecraft Skin Hosting Service");
         m.put("register_with_player_name", "true");
         m.put("require_verification", "false");
         m.put("regs_per_ip", "3");
-        m.put("announcement", "Welcome to Blessing Skin {version}!");
+        m.put("announcement", "Welcome to NeoSkin {version}!");
         m.put("home_pic_url", "./app/bg.webp");
         m.put("custom_css", "");
         m.put("custom_js", "");

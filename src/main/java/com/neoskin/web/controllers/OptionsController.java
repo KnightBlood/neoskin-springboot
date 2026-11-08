@@ -43,7 +43,7 @@ public final class OptionsController {
 
     private static final String UPDATES_MESSAGE = """
             <p class="text-danger font-weight-bold mb-0">请注意，修改更新 URL 可能导致您的 \
-            Blessing Skin 被恶意代码注入，进而影响您的数据、服务器或内网资产安全。<br>\
+            NeoSkin 被恶意代码注入，进而影响您的数据、服务器或内网资产安全。<br>\
             我们无法 100% 保证第三方更新源的安全，修改这里之前<strong>请一定要知道你在做什么！\
             </strong></p><div class="mt-3 d-flex flex-wrap"><button type="submit" \
             name="update_source_preset" value="official" class="btn btn-default mr-2 mb-2">\
@@ -104,13 +104,13 @@ public final class OptionsController {
                 homepage.checkbox("hide_intro").label();
                 homepage.checkbox("fixed_bg").label();
                 homepage.select("copyright_prefer")
-                        .option("0", "Powered with \u2764 by Blessing Skin Server.")
-                        .option("1", "Powered by Blessing Skin Server.")
-                        .option("2", "Proudly powered by Blessing Skin Server.")
-                        .option("3", "由 Blessing Skin Server 强力驱动。")
-                        .option("4", "采用 Blessing Skin Server 搭建。")
-                        .option("5", "使用 Blessing Skin Server 稳定运行。")
-                        .option("6", "自豪地采用 Blessing Skin Server。")
+                        .option("0", "Powered with \u2764 by NeoSkin Server.")
+                        .option("1", "Powered by NeoSkin Server.")
+                        .option("2", "Proudly powered by NeoSkin Server.")
+                        .option("3", "由 NeoSkin Server 强力驱动。")
+                        .option("4", "采用 NeoSkin Server 搭建。")
+                        .option("5", "使用 NeoSkin Server 稳定运行。")
+                        .option("6", "自豪地采用 NeoSkin Server。")
                         .description();
                 homepage.textarea("copyright_text").rows(6).description();
                 homepage.handle(post, input, form -> {

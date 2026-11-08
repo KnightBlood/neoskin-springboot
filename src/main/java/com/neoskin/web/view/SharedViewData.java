@@ -57,7 +57,7 @@ public final class SharedViewData {
      */
     public static Map<String, Object> base(Option option, String locale, boolean darkMode) {
         Map<String, Object> v = new LinkedHashMap<>();
-        v.put("site_name", option.getLocalized("site_name", "Blessing Skin"));
+        v.put("site_name", option.getLocalized("site_name", "NeoSkin"));
         String color = String.valueOf(option.get("navbar_color", "cyan"));
         v.put("navbar_color", color);
         v.put("color_mode", LIGHT_COLORS.contains(color) ? "light" : "dark");
@@ -178,7 +178,7 @@ public final class SharedViewData {
         blessing.put("version", "6.0.11_patch");
         blessing.put("locale", locale);
         blessing.put("base_url", urlRoot);
-        blessing.put("site_name", option.getLocalized("site_name", "Blessing Skin"));
+        blessing.put("site_name", option.getLocalized("site_name", "NeoSkin"));
         // Laravel request()->path() 不带前导斜杠（根路径是 "/"），前端路由表
         // （route.tsx 的 'auth/login'）按无斜杠匹配；带斜杠会让 React 不挂载。
         blessing.put("route", laravelPath(requestPath));
@@ -222,7 +222,7 @@ public final class SharedViewData {
         }
         return String.valueOf(raw)
                 .replace("{site_name}",
-                        String.valueOf(option.getLocalized("site_name", "Blessing Skin")))
+                        String.valueOf(option.getLocalized("site_name", "NeoSkin")))
                 .replace("{site_url}", String.valueOf(option.get("site_url", "")));
     }
 

@@ -42,7 +42,7 @@ public final class SetupPages {
         vars.put("locale", locale);
         vars.put("view", view);
         vars.put("cdn_base", option.get("cdn_address", ""));
-        vars.put("site_name", option.get("site_name", "Blessing Skin"));
+        vars.put("site_name", option.get("site_name", "NeoSkin"));
         vars.put("version", version == null || version.isEmpty()
                 ? option.get("version", "6.0.11_patch") : version);
         vars.put("errors", new AuthController.ErrorsView(

@@ -168,14 +168,14 @@ class SetupControllerTest {
     void welcomeAndInfoPagesRender() throws Exception {
         String welcome = get("/setup").body();
         assertEquals(200, get("/setup").statusCode());
-        assertTrue(welcome.contains("欢迎使用 Blessing Skin Server v6.0.11_patch"), welcome);
+        assertTrue(welcome.contains("欢迎使用 NeoSkin v6.0.11_patch"), welcome);
         assertTrue(welcome.contains("下一步"));
 
         HttpResponse<String> info = get("/setup/info");
         assertEquals(200, info.statusCode(), info.body());
         assertTrue(info.body().contains("填写信息"));
         assertTrue(info.body().contains("name=\"email\""));
-        assertTrue(info.body().contains("value=\"Blessing Skin\""));
+        assertTrue(info.body().contains("value=\"NeoSkin\""));
     }
 
     @Test

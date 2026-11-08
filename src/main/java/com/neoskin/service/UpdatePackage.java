@@ -184,7 +184,7 @@ public final class UpdatePackage {
                     }
                 }
                 if (prefix == null || composer == null) {
-                    throw new RuntimeException("未识别到 Blessing Skin 系统运行包。");
+                    throw new RuntimeException("未识别到 NeoSkin 系统运行包。");
                 }
                 for (String required : List.of("artisan", "bootstrap/app.php", "config/app.php",
                         "public/index.php", "vendor/autoload.php",

@@ -687,7 +687,7 @@ public final class AuthController {
             // send mail
             try {
                 sendMail(email, translator.trans("auth.forgot.mail.title",
-                        Map.of("sitename", option.getLocalized("site_name", "Blessing Skin")), locale),
+                        Map.of("sitename", option.getLocalized("site_name", "NeoSkin")), locale),
                         buildMailBody(fullUrl, option, translator, locale));
             } catch (Exception e) {
                 json(ctx, 200, message(2, translator.trans("auth.forgot.failed",
@@ -1168,7 +1168,7 @@ public final class AuthController {
     }
 
     private String buildMailBody(String url, Option option, Translator translator, String locale) {
-        String siteName = String.valueOf(option.getLocalized("site_name", "Blessing Skin"));
+        String siteName = String.valueOf(option.getLocalized("site_name", "NeoSkin"));
         String message = translator.trans("auth.forgot.mail.message", Map.of("sitename", siteName), locale);
         String reset = translator.trans("auth.forgot.mail.reset", Map.of("url", url), locale);
         String ignore = translator.trans("auth.forgot.mail.ignore", Map.of(), locale);

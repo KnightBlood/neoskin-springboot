@@ -194,7 +194,7 @@ class DataMigratorTest {
             assertEquals(55, env.count("SELECT COUNT(*) FROM options"));
 
             assertEquals("6.0.11_patch", env.option.get("version"));
-            assertEquals("Welcome to Blessing Skin 6.0.11_patch!",
+            assertEquals("Welcome to NeoSkin 6.0.11_patch!",
                     env.option.get("announcement"),
                     "announcement 的 {version} 必须在写入前替换，数据库里不存模板");
 

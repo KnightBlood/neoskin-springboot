@@ -132,7 +132,7 @@ public final class AuthView {
         extra.put("recaptcha", SharedViewData.falsyToNull(option.get("recaptcha_sitekey")));
         extra.put("invisible", option.getBoolean("recaptcha_invisible", false));
         v.put("extra", com.neoskin.support.PhpJson.encode(extra, 0));
-        v.put("site_name", option.getLocalized("site_name", "Blessing Skin"));
+        v.put("site_name", option.getLocalized("site_name", "NeoSkin"));
 
         return v;
     }

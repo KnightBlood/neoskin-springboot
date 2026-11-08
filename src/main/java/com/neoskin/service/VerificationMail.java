@@ -32,7 +32,7 @@ public final class VerificationMail {
 
     /** 邮件主题（源 {@code user.verification.mail.title}）。 */
     public static String subject(Option option, Translator translator, String locale) {
-        String sitename = String.valueOf(option.getLocalized("site_name", "Blessing Skin"));
+        String sitename = String.valueOf(option.getLocalized("site_name", "NeoSkin"));
 
         return translator.trans("user.verification.mail.title",
                 Map.of("sitename", sitename), locale);
@@ -40,7 +40,7 @@ public final class VerificationMail {
 
     /** 正文（源 {@code mails/email-verification.blade.php} 的三段）。 */
     public static String body(Option option, Translator translator, String locale, String url) {
-        String sitename = String.valueOf(option.getLocalized("site_name", "Blessing Skin"));
+        String sitename = String.valueOf(option.getLocalized("site_name", "NeoSkin"));
         String message = translator.trans("user.verification.mail.message",
                 Map.of("sitename", sitename), locale);
         String link = translator.trans("user.verification.mail.reset",

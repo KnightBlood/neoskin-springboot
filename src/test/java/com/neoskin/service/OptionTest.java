@@ -110,7 +110,7 @@ class OptionTest {
         assertFalse(defaults.containsKey("max_texture_width"));
 
         // 抽查几个容易写错的
-        assertEquals("Blessing Skin", defaults.get("site_name"));
+        assertEquals("NeoSkin", defaults.get("site_name"));
         assertEquals("official", defaults.get("player_name_rule"));
         assertEquals("10,100", defaults.get("sign_score"));
         assertEquals("31536000", defaults.get("cache_expire_time"));
@@ -118,7 +118,7 @@ class OptionTest {
         assertEquals("dark-maroon", defaults.get("sidebar_color"));
         assertEquals("app/favicon.ico", defaults.get("favicon_url"));
         assertEquals("403", defaults.get("status_code_for_private"));
-        assertEquals("Welcome to Blessing Skin {version}!", defaults.get("announcement"));
+        assertEquals("Welcome to NeoSkin {version}!", defaults.get("announcement"));
         assertEquals("", defaults.get("version"));
 
         // 键顺序与源文件一致（影响 options:cache 生成文件的 diff）
@@ -179,12 +179,12 @@ class OptionTest {
             Option option = site.newOption();
 
             // 空库：读 site_name 应返回 config/options.php 的默认值
-            assertEquals("Blessing Skin", option.get("site_name"));
+            assertEquals("NeoSkin", option.get("site_name"));
             // 且必须写回数据库（PHP 的 get() 里 set() 的副作用）
-            assertEquals("Blessing Skin", site.rawDbValue("site_name"));
+            assertEquals("NeoSkin", site.rawDbValue("site_name"));
 
             // 第二次读不再重复写，值不变
-            assertEquals("Blessing Skin", option.get("site_name"));
+            assertEquals("NeoSkin", option.get("site_name"));
             assertEquals(1, countRows(site, "site_name"));
         }
     }
@@ -217,7 +217,7 @@ class OptionTest {
 
             assertFalse(option.isInstalled());
             // 未安装时不读库，读到的必须是 config 默认值
-            assertEquals("Blessing Skin", option.get("site_name"));
+            assertEquals("NeoSkin", option.get("site_name"));
         }
     }
 

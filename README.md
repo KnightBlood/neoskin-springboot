@@ -1,8 +1,10 @@
 # NeoSkinSpringBoot
 
-> 最后更新：2026-11-06
+> 最后更新：2026-11-08
 
-Java / Spring Boot 4.1.x 实现的 Minecraft 皮肤托管平台，逐阶段迁移自
+> 仓库：<https://github.com/KnightBlood/neoskin-springboot>（`main`）
+
+**NeoSkin** 的 Java / Spring Boot 4.1.x 实现（Minecraft 皮肤托管平台），逐阶段迁移自
 `blessing-skin-server-Laravel13`（6.0.11_patch）。HTTP 契约、数据库结构、
 `public/app` 前端产物保持与源项目一致。
 
@@ -155,3 +157,16 @@ java -jar app.jar --neoskin.command=up
 | [PORT-NOTES.md](PORT-NOTES.md) | 偏差、决策与踩坑 |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | 构建、配置、部署与升级 |
 | [DB-MATRIX.md](DB-MATRIX.md) | 数据库矩阵 |
+
+## 发布
+
+推送 `v*` tag 后，`.github/workflows/release.yml` 构建并发布：
+
+```bash
+git tag v6.0.11
+git push origin v6.0.11
+```
+
+Release 产物：`neoskin-springboot_<version>.zip`，包含
+`neoskin.jar`（内嵌 legacy `public/app`）、`public/app-next`、
+`.env.example` 与部署文档。JAR 跨平台，需 Java 25。

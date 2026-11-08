@@ -90,7 +90,7 @@ public final class Commands {
         Option option = context.getBean(Option.class);
         if (option.isInstalled()) {
             System.out.println(
-                    "You have installed Blessing Skin Server. Nothing to do.");
+                    "You have installed NeoSkin. Nothing to do.");
             return 0;
         }
 
