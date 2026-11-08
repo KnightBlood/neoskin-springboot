@@ -47,6 +47,10 @@ import com.neoskin.support.PhpJson;
  *   <li>插件：源依赖 {@code PluginManager}；这里用回调
  *       {@link PluginLangProvider} 注入，PF4J 接好后传入实现，未接时为空列表
  *       （即「没有插件」这一子集，与主语言包路径完全一致）。</li>
+ *   <li>主语言包源定位：源始终读 {@code resource_path()}（文件系统）；这里
+ *       {@code <base>/resources/lang} 缺失时退回 classpath 资源 mtime，仍拿不到
+ *       则进程内首请求强制重编译一次 —— 保证 yml 更新 / 重启后 {@code public/lang}
+ *       不会停留在陈旧产物上。</li>
  * </ul>
  */
 public final class JavaScript {
@@ -65,6 +69,9 @@ public final class JavaScript {
 
     /** {@code front-end-trans-<locale> → 上次编译时的 sourceModified}。 */
     private final Map<String, Long> cache = new ConcurrentHashMap<>();
+
+    /** mtime 不可用时保证进程内每个 locale 至少重编译一次。 */
+    private final java.util.Set<String> generatedOnce = ConcurrentHashMap.newKeySet();
 
     public JavaScript(AppPaths paths, Translator translator, PluginLangProvider plugins) {
         this.paths = paths;
@@ -106,12 +113,22 @@ public final class JavaScript {
         for (PluginLang plugin : available) {
             sourceModified = Math.max(sourceModified, lastModified(plugin.path()));
         }
-        sourceModified = Math.max(sourceModified, lastModified(mainSource.toString()));
+        long mainModified = lastModified(mainSource.toString());
+        if (mainModified == 0L) {
+            // 主语言包不在文件系统（源 yml 打进 classpath/jar，见 TranslationFileLoader）
+            // → 退回读 classpath 资源的 mtime，否则 yml 更新永远触发不了重编译
+            mainModified = classpathLastModified(locale);
+        }
+        sourceModified = Math.max(sourceModified, mainModified);
 
         Path compiled = compiled(locale);
         long compiledModified = cache.getOrDefault(PREFIX + locale, 0L);
 
-        if (sourceModified > compiledModified || !Files.exists(compiled)) {
+        // mtime 完全不可用时（源在 jar 内且连接层拿不到时间）退化为
+        // 「进程内首次 generate 必重编译」：进程重启即刷新，语义与进程内缓存一致
+        boolean forceOnce = sourceModified == 0L && !Files.exists(mainSource)
+                && generatedOnce.add(PREFIX + locale);
+        if (forceOnce || sourceModified > compiledModified || !Files.exists(compiled)) {
             Map<String, Object> translations = new LinkedHashMap<>();
             // trans('front-end')：不带点号的键 → 整表
             Object frontEnd = translator.get("front-end", Map.of(), locale);
@@ -170,6 +187,30 @@ public final class JavaScript {
             Path p = Path.of(path);
             return Files.exists(p) ? Files.getLastModifiedTime(p).toMillis() / 1000 : 0L;
         } catch (IOException e) {
+            return 0L;
+        }
+    }
+
+    /**
+     * classpath 上 {@code /lang/<locale>/front-end.yml} 的 mtime（秒）。
+     * 开发态落在 {@code target/classes}（真实文件，mtime 准确）；打进 jar 时
+     * {@link java.net.URLConnection#getLastModified()} 通常返回 jar 本身的时间
+     * （重新打包即变化），拿不到则返回 0、由 {@code forceOnce} 兜底。
+     */
+    private static long classpathLastModified(String locale) {
+        try {
+            java.net.URL url = JavaScript.class.getResource(
+                    TranslationFileLoader.LANG_PREFIX + locale + "/front-end.yml");
+            if (url == null) {
+                return 0L;
+            }
+            if ("file".equals(url.getProtocol())) {
+                Path p = Path.of(url.toURI());
+                return Files.exists(p) ? Files.getLastModifiedTime(p).toMillis() / 1000 : 0L;
+            }
+            java.net.URLConnection conn = url.openConnection();
+            return Math.max(conn.getLastModified() / 1000, 0L);
+        } catch (IOException | java.net.URISyntaxException | IllegalArgumentException e) {
             return 0L;
         }
     }
