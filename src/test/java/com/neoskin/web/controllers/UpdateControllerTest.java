@@ -289,6 +289,21 @@ class UpdateControllerTest {
     }
 
     @Test
+    void installFromSpaJsonUsesPendingId() throws Exception {
+        seedUser("root@a.com", UserRepository.SUPER_ADMIN);
+        String cookie = login("root@a.com");
+
+        assertEquals(200, post("/admin/update/download", "", cookie).statusCode());
+
+        HttpResponse<String> install = postJson("/admin/update/install", "{}", cookie);
+        assertEquals(200, install.statusCode(), install.body());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) PhpJson.decode(install.body());
+        assertEquals(0, ((Number) body.get("code")).intValue(), install.body());
+        assertTrue(String.valueOf(body.get("message")).contains("已更新"));
+    }
+
+    @Test
     void downloadRejectsBadChecksumAndVersion() throws Exception {
         seedUser("root@a.com", UserRepository.SUPER_ADMIN);
         String cookie = login("root@a.com");
@@ -468,6 +483,24 @@ class UpdateControllerTest {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create("http://127.0.0.1:" + port + path))
                 .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Sec-Fetch-Site", "same-origin");
+        if (cookie != null && !cookie.isEmpty()) {
+            builder.header("Cookie", cookie);
+        }
+        builder.POST(HttpRequest.BodyPublishers.ofString(body == null ? "" : body,
+                StandardCharsets.UTF_8));
+
+        return http.send(builder.build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    private HttpResponse<String> postJson(String path, String body, String cookie)
+            throws Exception {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + port + path))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .header("X-Neoskin-Spa", "1")
                 .header("Sec-Fetch-Site", "same-origin");
         if (cookie != null && !cookie.isEmpty()) {
             builder.header("Cookie", cookie);

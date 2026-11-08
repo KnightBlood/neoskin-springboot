@@ -299,19 +299,31 @@ public final class UpdateController {
     /** {@code POST admin/update/install}。 */
     public Handler<RoutingContext> install() {
         return ctx -> {
+            boolean wantsJson = wantsJson(ctx);
             try {
                 SessionStore session = ctx.get(StartSession.CTX_KEY);
-                String id = RequestInput.inputString(ctx, "id");
-                if (id == null || id.length() != 32) {
-                    redirect(ctx, "update_error", "更新任务格式错误。");
-                    return;
-                }
                 Object pendingRaw = session == null ? null
                         : session.get("system_update_package");
                 String pendingId = pendingRaw instanceof Map<?, ?> map
                         ? String.valueOf(map.get("id")) : "";
+                String id = RequestInput.inputString(ctx, "id");
+                if ((id == null || id.isBlank()) && wantsJson) {
+                    id = pendingId;
+                }
+                if (id == null || id.length() != 32) {
+                    if (wantsJson) {
+                        json(ctx, 200, message(1, "更新任务格式错误。"));
+                    } else {
+                        redirect(ctx, "update_error", "更新任务格式错误。");
+                    }
+                    return;
+                }
                 if (!constantTimeEquals(pendingId, id)) {
-                    ctx.fail(403);
+                    if (wantsJson) {
+                        json(ctx, 200, message(1, "没有待安装的运行包。"));
+                    } else {
+                        ctx.fail(403);
+                    }
                     return;
                 }
                 packages.install(id);
@@ -320,14 +332,32 @@ public final class UpdateController {
                     session.forget("system_update_package");
                 }
 
-                redirect(ctx, "update_notice", "系统程序已更新，版本检查与数据库升级将在后续请求中完成。");
+                String message = "系统程序已更新，版本检查与数据库升级将在后续请求中完成。";
+                if (wantsJson) {
+                    json(ctx, 200, message(0, message));
+                } else {
+                    redirect(ctx, "update_notice", message);
+                }
             } catch (RuntimeException e) {
-                redirect(ctx, "update_error", e.getMessage() == null
-                        ? "安装失败，请检查站点目录权限与运行日志。" : e.getMessage());
+                String message = e.getMessage() == null
+                        ? "安装失败，请检查站点目录权限与运行日志。" : e.getMessage();
+                if (wantsJson) {
+                    json(ctx, 200, message(1, message));
+                } else {
+                    redirect(ctx, "update_error", message);
+                }
             } catch (Exception e) {
                 ctx.fail(e);
             }
         };
+    }
+
+    /** SPA 请求（Accept: application/json 或 X-Neoskin-Spa: 1）返回 JSON。 */
+    private static boolean wantsJson(RoutingContext ctx) {
+        String accept = ctx.request().getHeader("Accept");
+        String spa = ctx.request().getHeader("X-Neoskin-Spa");
+        return (accept != null && accept.toLowerCase().contains("application/json"))
+                || "1".equals(spa);
     }
 
     // ============================================================ 更新信息

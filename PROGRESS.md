@@ -108,7 +108,7 @@
   本轮补充回归验证。
 - 174 条 PHP 路由保持不变。
 - 验证：`mvn test` 1086 用例，0 fail，2 skipped。
-- 共享前端产物已同步到 `public/app-next`（site `index-pnUYroLe.js` / admin `index-DOqbNUvq.js`）。
+- 共享前端产物已同步到 `public/app-next`（site `index-pnUYroLe.js` / admin `index-8f1tgAaz.js`）。
 
 ### 2026-11-08（P6 切换验收，Spring 本机）
 
@@ -129,6 +129,8 @@
   Blessing Skin Server 上游归属（见 `PORT-NOTES.md`）。
 - 新增 `.github/workflows/release.yml`：推送 `v*` tag 后在 GitHub runner 构建并发布
   `neoskin-springboot_<version>.zip`，包含 `neoskin.jar`（内嵌 legacy `public/app`）、`public/app-next` 与部署文档。
-- 共享前端产物更新为 site `index-pnUYroLe.js` / admin `index-DOqbNUvq.js`。
+- 共享前端产物更新为 site `index-pnUYroLe.js` / admin `index-8f1tgAaz.js`。
 - 验证：`mvn test` 1086 用例，0 fail / 2 skipped（品牌默认值断言已调整）。
 - GitHub Release `v6.0.11` 已发布：`neoskin-springboot_6.0.11.zip`（jar + app-next）。
+- 专用环境验证更新下载/安装；修复 SPA 更新安装：缺省 id 时使用会话待安装包，
+  `Accept: application/json` / `X-Neoskin-Spa: 1` 返回 JSON 而非 302。

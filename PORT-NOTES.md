@@ -113,3 +113,6 @@
 - 安装向导与更新提示中的产品名改为 NeoSkin。
 - 保留上游归属与兼容标识：`copyright_prefer` 的 7 条文案、页脚链接、
   `blessing-*` 路由/字段/cookie/模板钩子均不变。
+- SPA 更新安装：`POST /admin/update/install` 在 `Accept: application/json` 或
+  `X-Neoskin-Spa: 1` 时返回 `{code,message}`；未传 `id` 时使用会话中的待安装包 id。
+  legacy 表单仍要求 32 位 id 并保持 302。
