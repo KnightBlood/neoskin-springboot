@@ -41,7 +41,7 @@ class TranslatorTest {
 
     /**
      * 全量重放：对每个 yml 文件做（Symfony 语义的）解析，逐叶子归类，
-     * 对齐探针输出（files=143 leaves=10744 nonString=24）。
+     * 对齐探针输出（files=143 leaves=11017 nonString=24）。
      */
     @Test
     void corpusParityProbeYaml() throws Exception {
@@ -61,7 +61,7 @@ class TranslatorTest {
             }
         }
         assertEquals(143, files);
-        assertEquals(10744, leaves);
+        assertEquals(11017, leaves);
         assertEquals(24, nonString);
     }
 
