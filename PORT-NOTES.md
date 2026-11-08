@@ -91,3 +91,16 @@
   `require_verification`、`player_name_length_min/max`、`user_initial_score`、`return_score`、
   `sign_after_zero`、`sign_gap_time`、`reporter_score_modification`、`reporter_reward_score`。
 - 无需新增路由或中间件，174 条 PHP 路由保持不变。
+
+### 契约端点挂载修复（2026-11-08）
+
+- 问题：`VertxRouteRegistry.build` 只把 `/api/bootstrap` 交给 `SpaFrontend`，
+  `GET /api/user/inbox`、`/api/user/reports`、`/api/admin/dashboard` 等契约端点
+  落到路由表兜底后返回 404。
+- 修复：在 174 条路由注册**之前**，按 GET 显式注册
+  `/api/user/inbox`、`/api/user/inbox/:id`、`/api/user/reports`、
+  `/api/admin/dashboard`、`/api/admin/update/info`、
+  `/api/admin/options/:group`、`/api/admin/communications`、
+  `/api/admin/communications/:id` 到 `SpaFrontend`。
+- `SpaFrontend.isContractPath` 未命中的路径会 `ctx.next()`，PUT/POST 仍由原路由表处理；
+  174 条路由数量与语义不变。`contract-check.mjs` 已验证通过。

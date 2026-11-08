@@ -117,3 +117,8 @@
 - `FRONTEND_MODE=legacy` 回滚：`GET /` 返回 legacy 页面（含 `#blessing-extra`），
   `/app-next/site/` 仍可访问。
 - Playwright 浏览器 E2E（`NEOSKIN_BROWSER_E2E=1`）通过。
+- 修复契约端点未挂载：`VertxRouteRegistry` 只注册了 `/api/bootstrap`，导致
+  `/api/user/inbox`、`/api/user/reports`、`/api/admin/*` 契约读取端点返回 404；
+  现按 GET 显式注册在 174 条路由之前，PUT/POST 仍落到原路由表。
+- `contract-check.mjs` 通过（`http://127.0.0.1:8799`）。
+- 回归：`mvn test` 1086 用例，0 fail，2 skipped（修复后复跑）。

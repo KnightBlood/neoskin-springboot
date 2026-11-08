@@ -160,11 +160,21 @@ public final class VertxRouteRegistry {
         // 双斜杠守卫：必须在路由<b>之前</b>，因为 Vert.x 会先把路径折叠掉。
         router.route().handler(slashGuard());
 
-        // SPA 壳与 /api/bootstrap：复用 web 组（EncryptCookies + StartSession）。
+        // SPA 壳与契约 v1 端点：复用 web 组（EncryptCookies + StartSession）。
         if (spaHandler != null) {
             registerSpaRoute(router, "/api/bootstrap", spaHandler, middlewareRegistry);
             registerSpaRoute(router, "/app-next/:mode", spaHandler, middlewareRegistry);
             registerSpaRoute(router, "/app-next/:mode/*", spaHandler, middlewareRegistry);
+            // 契约 v1 增量读取端点。只注册 GET；PUT/POST 仍落到 174 条路由表。
+            registerSpaRoute(router, "/api/user/inbox", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/user/inbox/:id", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/user/reports", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/admin/dashboard", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/admin/update/info", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/admin/options/:group", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/admin/communications", spaHandler, middlewareRegistry);
+            registerSpaRoute(router, "/api/admin/communications/:id", spaHandler,
+                    middlewareRegistry);
         }
 
         // 源 RouteServiceProvider：event(new ConfigureRoutes($router)) ——
