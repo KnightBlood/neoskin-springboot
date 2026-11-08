@@ -108,4 +108,4 @@
   本轮补充回归验证。
 - 174 条 PHP 路由保持不变。
 - 验证：`mvn test` 1086 用例，0 fail，2 skipped。
-- 共享前端产物已同步到 `public/app-next`（site `index-97G5gvx2.js` / admin `index-DHuSRUon.js`）。
+- 共享前端产物已同步到 `public/app-next`（site `index-BNFSlUne.js` / admin `index-C75dBgWo.js`）。
