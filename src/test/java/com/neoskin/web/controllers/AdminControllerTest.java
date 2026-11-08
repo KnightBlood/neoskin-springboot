@@ -240,6 +240,29 @@ class AdminControllerTest {
         assertTrue(html.contains("已开启的插件 (0)"), "插件数量");
     }
 
+    @Test
+    void statusEndpointReturnsJsonForSpa() throws Exception {
+        seedUser("admin@a.com", 1);
+        String cookie = login("admin@a.com");
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + port + "/admin/status"))
+                .header("Accept", "application/json")
+                .header("Cookie", cookie)
+                .GET().build();
+        HttpResponse<String> res = http.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        assertEquals(200, res.statusCode());
+        assertTrue(res.headers().firstValue("Content-Type").orElse("")
+                .contains("application/json"), "状态页 SPA 请求必须返回 JSON");
+        String json = res.body();
+        assertTrue(json.contains("\"bs\""), "bs 区块");
+        assertTrue(json.contains("\"server\""), "server 区块");
+        assertTrue(json.contains("\"db\""), "db 区块");
+        assertTrue(json.contains("\"plugins\""), "plugins 区块");
+    }
+
     // ---------------------------------------------------------------- 权限
 
     @Test

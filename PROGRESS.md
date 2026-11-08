@@ -135,3 +135,11 @@
 - 专用环境验证更新下载/安装；修复 SPA 更新安装：缺省 id 时使用会话待安装包，
   `Accept: application/json` / `X-Neoskin-Spa: 1` 返回 JSON 而非 302。
 - Patch Release `v6.0.11.1` 已发布：包含 SPA 更新安装 JSON/id 修复。
+
+### 2026-11-08（管理端运行状态 JSON 协商）
+
+- `GET admin/status` 增加内容协商：`Accept: application/json` 或 `X-Neoskin-Spa: 1`
+  返回 `bs` / `server` / `db` / `plugins` JSON；普通 HTML 请求继续渲染 legacy 状态页。
+- 修复共享管理端 SPA 状态页只显示 Go 端数据的问题；四端共享 `spa.sqlite` 联调时
+  `/app-next/admin/status` 正确展示 Spring 版本、运行时与数据库信息。
+- 验证：`AdminControllerTest` 6 passed（含新增 `statusEndpointReturnsJsonForSpa`）。

@@ -116,3 +116,9 @@
 - SPA 更新安装：`POST /admin/update/install` 在 `Accept: application/json` 或
   `X-Neoskin-Spa: 1` 时返回 `{code,message}`；未传 `id` 时使用会话中的待安装包 id。
   legacy 表单仍要求 32 位 id 并保持 302。
+
+### 管理端运行状态内容协商（2026-11-08）
+
+- `GET /admin/status` 在 `Accept: application/json` 或 `X-Neoskin-Spa: 1` 时返回
+  `{bs,server,db,plugins}` JSON；普通 HTML 请求继续渲染 `admin/status` 模板。
+- 用于共享管理端 SPA 状态页；四端联调时不再只显示 Go 端数据。

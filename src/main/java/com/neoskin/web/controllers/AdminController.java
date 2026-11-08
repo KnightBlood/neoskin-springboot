@@ -198,6 +198,15 @@ public final class AdminController {
                 detail.put("server", server);
                 detail.put("db", dbInfo);
 
+                if (wantsJson(ctx)) {
+                    detail.put("plugins", List.of());
+                    ctx.response().setStatusCode(200)
+                            .putHeader("Content-Type", "application/json")
+                            .end(Buffer.buffer(PhpJson.encode(detail, PhpJson.JSON_UNESCAPED_UNICODE),
+                                    "UTF-8"));
+                    return;
+                }
+
                 Map<String, Object> vars = pageVars(ctx, "admin",
                         translator.trans("general.status", Map.of(), locale), locale);
                 vars.put("detail", detail);
@@ -351,6 +360,13 @@ public final class AdminController {
                         session == null ? null : session.get("errors"))));
 
         return vars;
+    }
+
+    private static boolean wantsJson(RoutingContext ctx) {
+        String spa = ctx.request().getHeader("X-Neoskin-Spa");
+        String accept = ctx.request().getHeader("Accept");
+        return "1".equals(spa)
+                || (accept != null && accept.toLowerCase().contains("application/json"));
     }
 
     private void render(RoutingContext ctx, String template, Map<String, Object> vars) {
