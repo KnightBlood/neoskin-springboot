@@ -6,7 +6,8 @@
 
 **NeoSkin** 的 Java / Spring Boot 4.1.x 实现（Minecraft 皮肤托管平台），逐阶段迁移自
 `blessing-skin-server-Laravel13`（6.0.11_patch）。HTTP 契约、数据库结构、
-`public/app` 前端产物保持与源项目一致。
+`public/app` 前端产物保持与源项目一致；另提供 NeoSkin 共享前端
+`public/app-next`（React 19 / Vite 8，`FRONTEND_MODE=legacy|next`）。
 
 ## 当前状态（2026-11-06）
 
