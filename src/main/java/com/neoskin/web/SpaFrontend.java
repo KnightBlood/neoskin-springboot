@@ -669,6 +669,19 @@ public final class SpaFrontend implements Handler<RoutingContext> {
                 .with("score_per_player", option.getInt("score_per_player", 100))
                 .with("score_per_closet_item", option.getInt("score_per_closet_item", 0))
                 .with("sign_score", option.getString("sign_score", "10,100"))
+                .with("player_name_length_min", option.getInt("player_name_length_min", 3))
+                .with("player_name_length_max", option.getInt("player_name_length_max", 16))
+                .with("user_initial_score", option.getInt("user_initial_score", 1000))
+                .with("allow_downloading_texture",
+                        option.getBoolean("allow_downloading_texture", true))
+                .with("require_verification",
+                        option.getBoolean("require_verification", false))
+                .with("reporter_score_modification",
+                        option.getInt("reporter_score_modification", 0))
+                .with("reporter_reward_score", option.getInt("reporter_reward_score", 0))
+                .with("return_score", option.getBoolean("return_score", true))
+                .with("sign_after_zero", option.getBoolean("sign_after_zero", false))
+                .with("sign_gap_time", option.getInt("sign_gap_time", 24))
                 .with("take_back_scores_after_deletion",
                         option.getBoolean("take_back_scores_after_deletion", true))
                 .with("player_name_rule", option.getString("player_name_rule", "official"))
