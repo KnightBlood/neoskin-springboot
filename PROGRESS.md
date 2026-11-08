@@ -134,3 +134,4 @@
 - GitHub Release `v6.0.11` 已发布：`neoskin-springboot_6.0.11.zip`（jar + app-next）。
 - 专用环境验证更新下载/安装；修复 SPA 更新安装：缺省 id 时使用会话待安装包，
   `Accept: application/json` / `X-Neoskin-Spa: 1` 返回 JSON 而非 302。
+- Patch Release `v6.0.11.1` 已发布：包含 SPA 更新安装 JSON/id 修复。
